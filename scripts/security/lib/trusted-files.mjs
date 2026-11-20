@@ -1,6 +1,6 @@
 // Unico punto de acceso a disco del escaneo. Solo acepta rutas dentro del repositorio o del
 // directorio temporal del sistema; cualquier otra ruta se rechaza antes de tocar el disco.
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, relative, resolve, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,6 +35,21 @@ export function isDirectory(path) {
 export function ensureDirectory(path) {
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta validada por trusted()
   mkdirSync(trusted(path), { recursive: true });
+}
+
+// Fija los permisos de un directorio y, si se indica, de los archivos que ya contiene.
+export function setPermissions(path, { directoryMode, fileMode = null }) {
+  const directory = trusted(path);
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta validada por trusted()
+  chmodSync(directory, directoryMode);
+  if (fileMode === null) {
+    return;
+  }
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta validada por trusted()
+  for (const entry of readdirSync(directory, { withFileTypes: true }).filter((item) => item.isFile())) {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta validada por trusted()
+    chmodSync(trusted(resolve(directory, entry.name)), fileMode);
+  }
 }
 
 export function readText(path) {

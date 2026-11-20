@@ -1,6 +1,7 @@
 import { ContainerPath, runDocker, volumeMount } from '../lib/docker.mjs';
 import { createFinding } from '../lib/finding.mjs';
 import { lastLines } from '../lib/process-runner.mjs';
+import { allowContainerAccess } from '../lib/scan-context.mjs';
 import { normalizeSeverity } from '../lib/severity.mjs';
 
 const CACHE_VOLUME = 'miniwasp-trivy-cache';
@@ -109,7 +110,12 @@ function buildAndExportImage(context) {
   }
   const archive = `${context.workDirectory}/${IMAGE_ARCHIVE}`;
   const saved = runDocker(['save', '--output', archive, SCAN_IMAGE_TAG]);
-  return saved.status === 0 ? null : `docker save fallo: ${lastLines(saved.stderr)}`;
+  if (saved.status !== 0) {
+    return `docker save fallo: ${lastLines(saved.stderr)}`;
+  }
+  // El tar recien exportado tambien debe poder leerlo el usuario del contenedor de Trivy.
+  allowContainerAccess(context.outputDirectory, context.workDirectory);
+  return null;
 }
 
 export const trivyImageTool = {

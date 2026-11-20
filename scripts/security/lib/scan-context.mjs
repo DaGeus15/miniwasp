@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { ContainerPath, bindMount, tmpfsMount } from './docker.mjs';
-import { ensureDirectory, isDirectory, pathExists, writeText } from './trusted-files.mjs';
+import { ensureDirectory, isDirectory, pathExists, setPermissions, writeText } from './trusted-files.mjs';
 
 const EVIDENCE_DIRECTORY = 'docs/evidence/security';
 const SECRET_FILE = '.env';
@@ -21,6 +21,17 @@ function shadowMounts(rootDirectory, emptyFile) {
   return mounts;
 }
 
+// En Linux los escaneres corren con su propio usuario dentro del contenedor: deben poder leer
+// el directorio de trabajo (ahi queda la imagen exportada) y escribir la evidencia. Es solo para
+// el equipo que ejecuta el escaneo (por ejemplo, el runner efimero de CI). Windows no lo necesita.
+export function allowContainerAccess(outputDirectory, workDirectory) {
+  if (process.platform === 'win32') {
+    return;
+  }
+  setPermissions(outputDirectory, { directoryMode: 0o777, fileMode: 0o666 });
+  setPermissions(workDirectory, { directoryMode: 0o755, fileMode: 0o644 });
+}
+
 export function createScanContext(rootDirectory) {
   const root = resolve(rootDirectory);
   const outputDirectory = join(root, EVIDENCE_DIRECTORY);
@@ -28,6 +39,7 @@ export function createScanContext(rootDirectory) {
   const emptyFile = join(workDirectory, 'empty.env');
   ensureDirectory(outputDirectory);
   writeText(emptyFile, '');
+  allowContainerAccess(outputDirectory, workDirectory);
 
   return {
     root,
