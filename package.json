@@ -1,0 +1,56 @@
+{
+  "name": "miniwasp",
+  "version": "2.0.0",
+  "description": "Chat en tiempo real con videollamadas entre navegadores",
+  "type": "module",
+  "private": true,
+  "main": "src/server/index.js",
+  "scripts": {
+    "start": "node --env-file=.env src/server/index.js",
+    "start:lan": "node --env-file=.env --env-file=lan.env src/server/index.js",
+    "cert": "node scripts/generate-dev-cert.js",
+    "test": "node --test --test-timeout=15000 \"test/**/*.test.js\"",
+    "precoverage": "node -e \"fs.mkdirSync('coverage',{recursive:true})\"",
+    "coverage": "node --test --test-timeout=15000 --experimental-test-coverage --test-coverage-include=src/** --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \"test/**/*.test.js\"",
+    "postcoverage": "node -e \"const f='coverage/lcov.info';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replaceAll('\\\\','/'))\"",
+    "e2e": "node scripts/e2e/run-e2e.mjs",
+    "load": "node scripts/load/run-signaling-load.mjs",
+    "scan:zap": "node scripts/zap/run-zap-scan.mjs",
+    "test:mutation": "stryker run",
+    "test:mutation:critical": "stryker run stryker.critical.config.mjs",
+    "lint": "eslint src test scripts eslint.config.js",
+    "verify": "npm run lint && npm run coverage",
+    "scan:sonar": "docker compose run --rm scanner",
+    "scan:security": "node scripts/security/run-security-scans.mjs",
+    "deploy": "node deploy/railway-deploy.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1172.0",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "buffer": "^6.0.3",
+    "jpeg-js": "^0.4.4",
+    "nsfwjs": "^4.4.0",
+    "ws": "^8.22.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/tap-runner": "^10.1.1",
+    "eslint": "^10.14.0",
+    "eslint-plugin-security": "^4.2.1",
+    "eslint-plugin-sonarjs": "^4.2.2",
+    "globals": "^17.14.0",
+    "jsdom": "^29.1.1",
+    "playwright-core": "^1.65.0",
+    "selfsigned": "^5.5.0"
+  },
+  "overrides": {
+    "minimatch": "^11.0.8",
+    "glob": "^14.0.5",
+    "qs": "^6.17.1"
+  }
+}

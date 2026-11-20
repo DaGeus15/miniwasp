@@ -1,0 +1,38 @@
+# Integracion continua: los mismos comandos que se ejecutan en local antes de entregar.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Lint (complejidad, seguridad) y pruebas con cobertura
+        run: npm run verify
+      - name: Dependencias sin vulnerabilidades conocidas
+        run: npm audit --audit-level=low
+      - name: Escaneres de seguridad (SAST, SCA, secretos, IaC, SBOM)
+        run: npm run scan:security
+      - name: Imagen de la aplicacion
+        run: docker build --tag miniwasp:ci .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidencia
+          path: |
+            coverage/lcov.info
+            docs/evidence/security/

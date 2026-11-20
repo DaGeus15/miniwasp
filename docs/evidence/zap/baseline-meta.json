@@ -1,0 +1,16 @@
+{
+  "id": "baseline",
+  "title": "Baseline: pasivo + spider + AJAX spider (autenticado)",
+  "target": "https://host.docker.internal:56441",
+  "startedAt": "2026-11-20T21:52:45.476Z",
+  "finishedAt": "2026-11-20T21:56:13.009Z",
+  "zapExitCode": 2,
+  "command": "docker run --rm --name miniwasp-zap-baseline-22396 --mount type=bind,source=D:\\UTA\\8vo_Semestre\\Seguridad de Software\\miniWasp\\scripts\\zap,target=/zap/hooks,readonly --mount type=bind,source=D:\\UTA\\8vo_Semestre\\Seguridad de Software\\miniWasp\\docs\\evidence\\zap,target=/zap/wrk -e MINIWASP_SESSION_TOKEN -e MINIWASP_API_TOKEN -e MINIWASP_VIDEOCALL_ID -e MINIWASP_TARGET_AUTHORITY -e MINIWASP_AUTH_CHECK_FILE ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t https://host.docker.internal:56441 -j --ajax-spider -m 2 -r baseline-report.html -J baseline-report.json -w baseline-report.md --hook=/zap/hooks/zap_hooks.py",
+  "sourceStable": true,
+  "verdict": {
+    "passed": false,
+    "riskyCount": 1,
+    "informationalTypes": 4,
+    "acceptedCount": 0
+  }
+}

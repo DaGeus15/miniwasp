@@ -1,0 +1,35 @@
+{
+  "$comment": "Imagenes oficiales de los escaneres, fijadas por digest del indice multi-arquitectura. El tag es informativo; Docker ejecuta lo que indica el digest. Para actualizar: docker buildx imagetools inspect <repo>:<tag> y copiar Manifest.Digest.",
+  "images": {
+    "semgrep": {
+      "repository": "semgrep/semgrep",
+      "tag": "1.184.0",
+      "digest": "sha256:cc1b68266f267878b39739373ea9985b9a78e5d64497dd875c8de100b22695ed"
+    },
+    "osvScanner": {
+      "repository": "ghcr.io/google/osv-scanner",
+      "tag": "v2.7.1",
+      "digest": "sha256:a70ffffc2bfd33482953e5d6b64c6fcdb30239717a07b0f0d3ab2859ce3e4cde"
+    },
+    "trivy": {
+      "repository": "aquasec/trivy",
+      "tag": "0.76.2",
+      "digest": "sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb"
+    },
+    "gitleaks": {
+      "repository": "zricethezav/gitleaks",
+      "tag": "v8.30.1",
+      "digest": "sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
+    },
+    "checkov": {
+      "repository": "bridgecrew/checkov",
+      "tag": "3.4.4",
+      "digest": "sha256:ddf34d41033624e86f7578537cf23ad6880faf5aff4cf98aca657fae315b4195"
+    },
+    "node": {
+      "repository": "node",
+      "tag": "22-alpine",
+      "digest": "sha256:5b05da3f938f1c604b24c633646d48805a6667f378cb4908438616f3cc48a0bf"
+    }
+  }
+}

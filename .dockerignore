@@ -1,0 +1,6 @@
+# Lista de permitidos: todo queda fuera del contexto de build salvo lo que la imagen necesita.
+# Asi .env, certs/, node_modules/, coverage/ y reportes nunca llegan a la imagen.
+*
+!package.json
+!package-lock.json
+!src/

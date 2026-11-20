@@ -1,0 +1,1753 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-19T00:00:00.000Z",
+  "__export_source": "miniwasp.generator",
+  "resources": [
+    {
+      "_id": "wrk_miniwasp_api",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "MiniWasp API",
+      "description": "API REST de MiniWasp: autenticación, búsqueda de usuarios, videollamadas uno a uno, mensajes, adjuntos, moderación, salas públicas y cierre de sesión.\n\nSelecciona el entorno **Local** y ejecuta las carpetas en orden (o todo con el Collection Runner). Cada petición guarda en el entorno los tokens e ids que necesitan las siguientes, y trae pruebas automáticas.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_miniwasp_base",
+      "_type": "environment",
+      "parentId": "wrk_miniwasp_api",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000",
+        "ana_token": "",
+        "luis_token": "",
+        "carla_token": "",
+        "diego_token": "",
+        "invite_token": "",
+        "diego_invite": "",
+        "call_id": "",
+        "diego_call_id": "",
+        "elena_token": "",
+        "fabio_token": "",
+        "elena_invite": "",
+        "attachment_id": "",
+        "message_id": "",
+        "fabio_message_id": "",
+        "gabi_token": "",
+        "hugo_token": "",
+        "iris_token": "",
+        "public_listing_id": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1
+    },
+    {
+      "_id": "env_miniwasp_local",
+      "_type": "environment",
+      "parentId": "env_miniwasp_base",
+      "name": "Local (http://localhost:3000)",
+      "data": {
+        "base_url": "http://localhost:3000"
+      },
+      "dataPropertyOrder": null,
+      "color": "#2e7d32",
+      "isPrivate": false,
+      "metaSortKey": 2
+    },
+    {
+      "_id": "env_miniwasp_lan",
+      "_type": "environment",
+      "parentId": "env_miniwasp_base",
+      "name": "LAN con HTTPS (npm run start:lan)",
+      "data": {
+        "base_url": "https://localhost:3000"
+      },
+      "dataPropertyOrder": null,
+      "color": "#1565c0",
+      "isPrivate": false,
+      "metaSortKey": 3
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "1 · Autenticación",
+      "description": "POST /api/v1/auth/login con `{ name, acceptedRules: true }` crea una sala nueva (quien entra es la dueña). Con `{ name, inviteToken, acceptedRules: true }` se une a una sala existente. `acceptedRules` debe ser exactamente `true` (16 años o más y normas de la comunidad) y el nombre pasa por la moderación. Responde 201 con `accessToken` (Bearer).",
+      "environment": {},
+      "metaSortKey": 1000
+    },
+    {
+      "_id": "req_005",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Ana inicia sesión (crea la sala)",
+      "description": "Sin `inviteToken`: crea una sala y devuelve el token de Ana y la invitación para las demás personas.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Ana\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\ninsomnia.test('Ana es la dueña', () => insomnia.expect(insomnia.response.json().user.isOwner).to.equal(true));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('ana_token', body.accessToken);\n  insomnia.environment.set('invite_token', body.room.inviteToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 1010
+    },
+    {
+      "_id": "req_006",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Luis inicia sesión (con la invitación)",
+      "description": "Se une a la sala de Ana usando la invitación guardada en el paso anterior.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Luis\",\n  \"inviteToken\": \"{{ _.invite_token }}\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('luis_token', body.accessToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 1020
+    },
+    {
+      "_id": "req_007",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Carla inicia sesión (con la invitación)",
+      "description": "La tercera persona de la sala. Más adelante intentará entrar a la videollamada llena.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Carla\",\n  \"inviteToken\": \"{{ _.invite_token }}\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('carla_token', body.accessToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 1030
+    },
+    {
+      "_id": "fld_users",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "2 · Búsqueda de usuario",
+      "description": "GET /api/v1/users?q=<texto> busca personas de **tu misma sala** por parte del nombre (sin distinguir mayúsculas). Sin `q` lista a todas. Requiere Bearer.",
+      "environment": {},
+      "metaSortKey": 2030
+    },
+    {
+      "_id": "req_009",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Ana lista a todas las personas de la sala",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/users",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.ana_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Hay 3 personas', () => insomnia.expect(insomnia.response.json().total).to.equal(3));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 2040
+    },
+    {
+      "_id": "req_010",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Ana busca \"lu\"",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/users?q=lu",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.ana_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Encuentra a Luis', () => insomnia.expect(insomnia.response.json().users[0].name).to.equal('Luis'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 2050
+    },
+    {
+      "_id": "fld_calls",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "3 · Videollamada",
+      "description": "Videollamadas uno a uno (capacidad 2). POST /api/v1/videocalls crea una y entra; POST /api/v1/videocalls/{id}/join entra; GET /api/v1/videocalls/{id} consulta; POST /api/v1/videocalls/{id}/leave sale. Una tercera persona recibe **409 CALL_FULL**.",
+      "environment": {},
+      "metaSortKey": 3050
+    },
+    {
+      "_id": "req_012",
+      "_type": "request",
+      "parentId": "fld_calls",
+      "name": "Ana inicia la videollamada",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/videocalls",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.ana_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\ninsomnia.test('Queda esperando', () => insomnia.expect(insomnia.response.json().status).to.equal('waiting'));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('call_id', body.id);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 3060
+    },
+    {
+      "_id": "req_013",
+      "_type": "request",
+      "parentId": "fld_calls",
+      "name": "Luis entra a la videollamada",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/videocalls/{{ _.call_id }}/join",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.luis_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('La llamada queda activa', () => insomnia.expect(insomnia.response.json().status).to.equal('active'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 3070
+    },
+    {
+      "_id": "req_014",
+      "_type": "request",
+      "parentId": "fld_calls",
+      "name": "Carla intenta entrar → 409 CALL_FULL",
+      "description": "La videollamada ya tiene a Ana y a Luis. Carla recibe un error 409 con `code: CALL_FULL`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/videocalls/{{ _.call_id }}/join",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.carla_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 409', () => insomnia.expect(insomnia.response.code).to.equal(409));\ninsomnia.test('code = CALL_FULL', () => insomnia.expect(insomnia.response.json().code).to.equal('CALL_FULL'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 3080
+    },
+    {
+      "_id": "req_015",
+      "_type": "request",
+      "parentId": "fld_calls",
+      "name": "Carla busca a Ana y ve su videollamada",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/users?q=ana",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.carla_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Ana aparece en la llamada', () => insomnia.expect(insomnia.response.json().users[0].videocallId).to.equal(insomnia.environment.get('call_id')));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 3090
+    },
+    {
+      "_id": "req_016",
+      "_type": "request",
+      "parentId": "fld_calls",
+      "name": "Consultar el estado de la videollamada",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/videocalls/{{ _.call_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.luis_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Hay 2 participantes', () => insomnia.expect(insomnia.response.json().participants.length).to.equal(2));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 3100
+    },
+    {
+      "_id": "fld_logout",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "4 · Cerrar sesión",
+      "description": "POST /api/v1/auth/logout revoca el token (204), libera el nombre y saca a la persona de su videollamada. Usar el token después responde **401 TOKEN_INVALID**.",
+      "environment": {},
+      "metaSortKey": 4100
+    },
+    {
+      "_id": "req_018",
+      "_type": "request",
+      "parentId": "fld_logout",
+      "name": "Ana cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.ana_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 4110
+    },
+    {
+      "_id": "req_019",
+      "_type": "request",
+      "parentId": "fld_logout",
+      "name": "Ana intenta usar su token revocado → 401",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/users",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.ana_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 401', () => insomnia.expect(insomnia.response.code).to.equal(401));\ninsomnia.test('code = TOKEN_INVALID', () => insomnia.expect(insomnia.response.json().code).to.equal('TOKEN_INVALID'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 4120
+    },
+    {
+      "_id": "req_020",
+      "_type": "request",
+      "parentId": "fld_logout",
+      "name": "Luis ve que Ana salió de la videollamada",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/videocalls/{{ _.call_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.luis_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Solo queda Luis', () => insomnia.expect(insomnia.response.json().participants.length).to.equal(1));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 4130
+    },
+    {
+      "_id": "req_021",
+      "_type": "request",
+      "parentId": "fld_logout",
+      "name": "Luis cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.luis_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 4140
+    },
+    {
+      "_id": "req_022",
+      "_type": "request",
+      "parentId": "fld_logout",
+      "name": "Carla cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.carla_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 4150
+    },
+    {
+      "_id": "fld_messages",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "5 · Mensajes y adjuntos",
+      "description": "Mensajes de la sala propia: `GET/POST /api/v1/messages`, `DELETE /api/v1/messages/{id}` y `POST /api/v1/messages/{id}/report`. Adjuntos: `POST /api/v1/attachments` (el cuerpo es el archivo tal cual y su nombre va en `X-File-Name`, codificado como URI) y `GET /api/v1/attachments/{id}` (solo adjuntos ya enviados en un mensaje de tu sala; admite `Range`). El autor de un mensaje siempre es el nombre de la sesión. Esta carpeta es independiente: crea su propia sala con Elena y Fabio.",
+      "environment": {},
+      "metaSortKey": 5150
+    },
+    {
+      "_id": "req_044",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Elena inicia sesión (crea otra sala)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Elena\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('elena_token', body.accessToken);\n  insomnia.environment.set('elena_invite', body.room.inviteToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5160
+    },
+    {
+      "_id": "req_045",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio inicia sesión (con la invitación de Elena)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Fabio\",\n  \"inviteToken\": \"{{ _.elena_invite }}\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('fabio_token', body.accessToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5170
+    },
+    {
+      "_id": "req_046",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Elena sube una nota de texto",
+      "description": "Cuerpo crudo (el archivo tal cual) y nombre en `X-File-Name`. El servidor identifica el tipo por el contenido (texto UTF-8 sin caracteres de control → `text/plain`), modera el texto y lo guarda cifrado. Hasta que se envíe en un mensaje, solo Elena lo conoce.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/attachments",
+      "body": {
+        "mimeType": "text/plain",
+        "text": "Hola, esta es la nota de Elena.\n"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "text/plain"
+        },
+        {
+          "name": "X-File-Name",
+          "value": "nota%20de%20Elena.txt"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.elena_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\ninsomnia.test('Es un documento de texto', () => insomnia.expect(insomnia.response.json().mimeType).to.equal('text/plain'));\ninsomnia.test('Nombre decodificado', () => insomnia.expect(insomnia.response.json().fileName).to.equal('nota de Elena.txt'));\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('attachment_id', insomnia.response.json().id);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5180
+    },
+    {
+      "_id": "req_047",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio intenta descargarlo antes de que se envíe → 404",
+      "description": "Un adjunto subido pero no enviado no existe para el resto de la sala.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/attachments/{{ _.attachment_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = ATTACHMENT_NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('ATTACHMENT_NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5190
+    },
+    {
+      "_id": "req_048",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Elena envía un mensaje con el adjunto",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/messages",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"text\": \"Les dejo la nota\",\n  \"attachmentId\": \"{{ _.attachment_id }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.elena_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\ninsomnia.test('Autora = Elena', () => insomnia.expect(insomnia.response.json().message.name).to.equal('Elena'));\ninsomnia.test('Lleva el adjunto', () => insomnia.expect(insomnia.response.json().message.attachment.id).to.equal(insomnia.environment.get('attachment_id')));\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('message_id', insomnia.response.json().message.id);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5200
+    },
+    {
+      "_id": "req_049",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Elena intenta reutilizar el adjunto → 404",
+      "description": "Un adjunto se envía una sola vez.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/messages",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"attachmentId\": \"{{ _.attachment_id }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.elena_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = ATTACHMENT_NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('ATTACHMENT_NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5210
+    },
+    {
+      "_id": "req_050",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio envía un mensaje (el campo name se ignora)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/messages",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"text\": \"Gracias, ya la leo\",\n  \"name\": \"Otra persona\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\ninsomnia.test('Autor = Fabio (nombre de la sesión)', () => insomnia.expect(insomnia.response.json().message.name).to.equal('Fabio'));\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('fabio_message_id', insomnia.response.json().message.id);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5220
+    },
+    {
+      "_id": "req_051",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio lista los mensajes de la sala",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/messages",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Hay 2 mensajes', () => insomnia.expect(insomnia.response.json().messages.length).to.equal(2));\ninsomnia.test('El primero trae el adjunto', () => insomnia.expect(insomnia.response.json().messages[0].attachment.fileName).to.equal('nota de Elena.txt'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5230
+    },
+    {
+      "_id": "req_052",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio descarga el adjunto",
+      "description": "Se descarga como archivo (`Content-Disposition: attachment`) con `Content-Security-Policy: default-src 'none'; sandbox` y `Cache-Control: no-store`.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/attachments/{{ _.attachment_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Content-Type text/plain', () => insomnia.expect(String(insomnia.response.headers.get('Content-Type'))).to.equal('text/plain'));\ninsomnia.test('Se descarga como archivo', () => insomnia.expect(String(insomnia.response.headers.get('Content-Disposition'))).to.include('attachment;'));\ninsomnia.test('CSP con sandbox', () => insomnia.expect(String(insomnia.response.headers.get('Content-Security-Policy'))).to.include('sandbox'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5240
+    },
+    {
+      "_id": "req_053",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio descarga solo los primeros 4 bytes → 206",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/attachments/{{ _.attachment_id }}",
+      "body": {},
+      "headers": [
+        {
+          "name": "Range",
+          "value": "bytes=0-3"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 206', () => insomnia.expect(insomnia.response.code).to.equal(206));\ninsomnia.test('Content-Range 0-3', () => insomnia.expect(String(insomnia.response.headers.get('Content-Range'))).to.include('bytes 0-3/'));\ninsomnia.test('Contenido = Hola', () => insomnia.expect(insomnia.response.text()).to.equal('Hola'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5250
+    },
+    {
+      "_id": "req_054",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio intenta borrar el mensaje de Elena → 403",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/v1/messages/{{ _.message_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 403', () => insomnia.expect(insomnia.response.code).to.equal(403));\ninsomnia.test('code = NOT_MESSAGE_AUTHOR', () => insomnia.expect(insomnia.response.json().code).to.equal('NOT_MESSAGE_AUTHOR'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5260
+    },
+    {
+      "_id": "req_055",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio reporta el mensaje de Elena → 202",
+      "description": "El reporte avisa a la dueña de la sala; con 3 reportes de personas distintas el mensaje se borra solo.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/messages/{{ _.message_id }}/report",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 202', () => insomnia.expect(insomnia.response.code).to.equal(202));\ninsomnia.test('status = reported', () => insomnia.expect(insomnia.response.json().status).to.equal('reported'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5270
+    },
+    {
+      "_id": "req_056",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio borra su propio mensaje",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/v1/messages/{{ _.fabio_message_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5280
+    },
+    {
+      "_id": "req_057",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Elena (dueña) borra el mensaje con el adjunto",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/v1/messages/{{ _.message_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.elena_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5290
+    },
+    {
+      "_id": "req_058",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Borrar de nuevo es idempotente → 204",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/v1/messages/{{ _.message_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.elena_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5300
+    },
+    {
+      "_id": "req_059",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Elena ve la sala sin mensajes",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/messages",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.elena_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('Sin mensajes', () => insomnia.expect(insomnia.response.json().messages.length).to.equal(0));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5310
+    },
+    {
+      "_id": "req_060",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "El adjunto del mensaje borrado ya no existe → 404",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/attachments/{{ _.attachment_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = ATTACHMENT_NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('ATTACHMENT_NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5320
+    },
+    {
+      "_id": "req_061",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Fabio cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.fabio_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5330
+    },
+    {
+      "_id": "req_062",
+      "_type": "request",
+      "parentId": "fld_messages",
+      "name": "Elena cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.elena_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 5340
+    },
+    {
+      "_id": "fld_moderation",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "6 · Moderación",
+      "description": "Todo lo que se publica pasa por la moderación: mensajes, nombres, nombres de archivo y documentos de texto. El tipo de un archivo se decide por su contenido, nunca por la extensión. Entrar exige `acceptedRules: true`. Esta carpeta es independiente: crea su propia sala con Gabi.",
+      "environment": {},
+      "metaSortKey": 6150
+    },
+    {
+      "_id": "req_063",
+      "_type": "request",
+      "parentId": "fld_moderation",
+      "name": "Gabi inicia sesión (crea otra sala)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Gabi\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('gabi_token', body.accessToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 6160
+    },
+    {
+      "_id": "req_064",
+      "_type": "request",
+      "parentId": "fld_moderation",
+      "name": "Gabi envía un mensaje prohibido → 422",
+      "description": "Venta de drogas: el mensaje no se guarda ni se difunde y cuenta una falta. Tres faltas silencian la sesión (429 `SENDER_MUTED`).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/messages",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"text\": \"vendo cocaina\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.gabi_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 422', () => insomnia.expect(insomnia.response.code).to.equal(422));\ninsomnia.test('code = CONTENT_BLOCKED', () => insomnia.expect(insomnia.response.json().code).to.equal('CONTENT_BLOCKED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 6170
+    },
+    {
+      "_id": "req_065",
+      "_type": "request",
+      "parentId": "fld_moderation",
+      "name": "Gabi sube un ejecutable (.exe) → 415",
+      "description": "El cuerpo empieza con `MZ` y trae bytes de control, como un ejecutable de Windows: no coincide con ninguna firma permitida (JPEG, PDF, audio o texto plano) y se rechaza sin guardarse.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/attachments",
+      "body": {
+        "mimeType": "application/octet-stream",
+        "text": "MZ\u0000\u0003\u0000\u0000\u0000\u0004\u0000PE\u0000\u0000"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/octet-stream"
+        },
+        {
+          "name": "X-File-Name",
+          "value": "programa.exe"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.gabi_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 415', () => insomnia.expect(insomnia.response.code).to.equal(415));\ninsomnia.test('code = FILE_TYPE_NOT_ALLOWED', () => insomnia.expect(insomnia.response.json().code).to.equal('FILE_TYPE_NOT_ALLOWED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 6180
+    },
+    {
+      "_id": "req_066",
+      "_type": "request",
+      "parentId": "fld_moderation",
+      "name": "Login con un nombre ofensivo → 422",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Pornografia gratis\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 422', () => insomnia.expect(insomnia.response.code).to.equal(422));\ninsomnia.test('code = CONTENT_BLOCKED', () => insomnia.expect(insomnia.response.json().code).to.equal('CONTENT_BLOCKED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 6190
+    },
+    {
+      "_id": "req_067",
+      "_type": "request",
+      "parentId": "fld_moderation",
+      "name": "Login sin aceptar las normas → 400",
+      "description": "Sin `acceptedRules: true` (16 años o más y normas de la comunidad) no se puede entrar.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Hugo\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 400', () => insomnia.expect(insomnia.response.code).to.equal(400));\ninsomnia.test('code = RULES_NOT_ACCEPTED', () => insomnia.expect(insomnia.response.json().code).to.equal('RULES_NOT_ACCEPTED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 6200
+    },
+    {
+      "_id": "req_068",
+      "_type": "request",
+      "parentId": "fld_moderation",
+      "name": "Gabi cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.gabi_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 6210
+    },
+    {
+      "_id": "fld_errors",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "7 · Manejo de errores",
+      "description": "Todas las respuestas de error tienen la forma `{ \"error\": \"<mensaje para personas>\", \"code\": \"<CODIGO>\" }` y el encabezado `X-Request-Id`. Esta carpeta es independiente: crea su propia sala con Diego.",
+      "environment": {},
+      "metaSortKey": 7150
+    },
+    {
+      "_id": "req_024",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Login sin nombre → 400 INVALID_NAME",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 400', () => insomnia.expect(insomnia.response.code).to.equal(400));\ninsomnia.test('code = INVALID_NAME', () => insomnia.expect(insomnia.response.json().code).to.equal('INVALID_NAME'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7160
+    },
+    {
+      "_id": "req_025",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Login con nombre de más de 30 caracteres → 400",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Nombre demasiado largo para la sala\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 400', () => insomnia.expect(insomnia.response.code).to.equal(400));\ninsomnia.test('code = INVALID_NAME', () => insomnia.expect(insomnia.response.json().code).to.equal('INVALID_NAME'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7170
+    },
+    {
+      "_id": "req_026",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Login con JSON malformado → 400 BAD_REQUEST",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{ \"name\": \"Ana\""
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 400', () => insomnia.expect(insomnia.response.code).to.equal(400));\ninsomnia.test('code = BAD_REQUEST', () => insomnia.expect(insomnia.response.json().code).to.equal('BAD_REQUEST'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7180
+    },
+    {
+      "_id": "req_027",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Login con Content-Type text/plain → 415",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "text/plain",
+        "text": "name=Ana"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "text/plain"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 415', () => insomnia.expect(insomnia.response.code).to.equal(415));\ninsomnia.test('code = UNSUPPORTED_MEDIA_TYPE', () => insomnia.expect(insomnia.response.json().code).to.equal('UNSUPPORTED_MEDIA_TYPE'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7190
+    },
+    {
+      "_id": "req_028",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Login con invitación inexistente → 404",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Eva\",\n  \"inviteToken\": \"invitacion-falsa\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = INVITE_NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('INVITE_NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7200
+    },
+    {
+      "_id": "req_029",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Login con inviteToken que no es texto → 400",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Eva\",\n  \"inviteToken\": 12345,\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 400', () => insomnia.expect(insomnia.response.code).to.equal(400));\ninsomnia.test('code = INVALID_INVITE', () => insomnia.expect(insomnia.response.json().code).to.equal('INVALID_INVITE'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7210
+    },
+    {
+      "_id": "req_030",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Diego inicia sesión (otra sala)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Diego\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('diego_token', body.accessToken);\n  insomnia.environment.set('diego_invite', body.room.inviteToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7220
+    },
+    {
+      "_id": "req_031",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Nombre repetido en la sala → 409 NAME_TAKEN",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"DIEGO\",\n  \"inviteToken\": \"{{ _.diego_invite }}\",\n  \"acceptedRules\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 409', () => insomnia.expect(insomnia.response.code).to.equal(409));\ninsomnia.test('code = NAME_TAKEN', () => insomnia.expect(insomnia.response.json().code).to.equal('NAME_TAKEN'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7230
+    },
+    {
+      "_id": "req_032",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Búsqueda sin token → 401 TOKEN_MISSING",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/users",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 401', () => insomnia.expect(insomnia.response.code).to.equal(401));\ninsomnia.test('code = TOKEN_MISSING', () => insomnia.expect(insomnia.response.json().code).to.equal('TOKEN_MISSING'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7240
+    },
+    {
+      "_id": "req_033",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Búsqueda con token inventado → 401 TOKEN_INVALID",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/users",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "token-inventado",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 401', () => insomnia.expect(insomnia.response.code).to.equal(401));\ninsomnia.test('code = TOKEN_INVALID', () => insomnia.expect(insomnia.response.json().code).to.equal('TOKEN_INVALID'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7250
+    },
+    {
+      "_id": "req_034",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Búsqueda con q de más de 30 caracteres → 400",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/users?q=abcdefghijklmnopqrstuvwxyz12345",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.diego_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 400', () => insomnia.expect(insomnia.response.code).to.equal(400));\ninsomnia.test('code = INVALID_QUERY', () => insomnia.expect(insomnia.response.json().code).to.equal('INVALID_QUERY'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7260
+    },
+    {
+      "_id": "req_035",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Diego inicia una videollamada",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/videocalls",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.diego_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('diego_call_id', body.id);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7270
+    },
+    {
+      "_id": "req_036",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Diego intenta iniciar otra → 409 ALREADY_IN_CALL",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/videocalls",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.diego_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 409', () => insomnia.expect(insomnia.response.code).to.equal(409));\ninsomnia.test('code = ALREADY_IN_CALL', () => insomnia.expect(insomnia.response.json().code).to.equal('ALREADY_IN_CALL'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7280
+    },
+    {
+      "_id": "req_037",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Videollamada inexistente → 404 CALL_NOT_FOUND",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/videocalls/00000000-0000-4000-8000-000000000000",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.diego_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = CALL_NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('CALL_NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7290
+    },
+    {
+      "_id": "req_038",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Diego intenta entrar a la llamada de otra sala → 404",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/videocalls/{{ _.call_id }}/join",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.diego_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = CALL_NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('CALL_NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7300
+    },
+    {
+      "_id": "req_039",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Método no permitido → 405",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 405', () => insomnia.expect(insomnia.response.code).to.equal(405));\ninsomnia.test('code = METHOD_NOT_ALLOWED', () => insomnia.expect(insomnia.response.json().code).to.equal('METHOD_NOT_ALLOWED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7310
+    },
+    {
+      "_id": "req_040",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Ruta inexistente → 404 NOT_FOUND",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/no-existe",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7320
+    },
+    {
+      "_id": "req_041",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Diego sale de su videollamada",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/videocalls/{{ _.diego_call_id }}/leave",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.diego_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7330
+    },
+    {
+      "_id": "req_042",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Diego cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.diego_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7340
+    },
+    {
+      "_id": "req_043",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Cerrar sesión sin token → 401 TOKEN_MISSING",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 401', () => insomnia.expect(insomnia.response.code).to.equal(401));\ninsomnia.test('code = TOKEN_MISSING', () => insomnia.expect(insomnia.response.json().code).to.equal('TOKEN_MISSING'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 7350
+    },
+    {
+      "_id": "fld_public",
+      "_type": "request_group",
+      "parentId": "wrk_miniwasp_api",
+      "name": "8 · Salas públicas",
+      "description": "Salas públicas por la API: se crean al iniciar sesión con `visibility: \"public\"` y un `title`, aparecen en `GET /api/v1/rooms/public` (sin token, hasta 60 consultas por minuto por IP) y se entra con `listingId`. Usan las reglas estrictas: sin groserías ni insultos, solo fotos JPEG y texto plano, modo lento de 2 segundos. Esta carpeta es independiente: crea su propia sala con Hugo. Crear salas públicas está limitado a 3 cada 10 minutos por IP: si ejecutas la carpeta más de tres veces seguidas, espera o reinicia el servidor.\n\nLos susurros no tienen API REST: necesitan dos conexiones WebSocket vivas.",
+      "environment": {},
+      "metaSortKey": 8150
+    },
+    {
+      "_id": "req_069",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Hugo crea una sala pública al iniciar sesión",
+      "description": "El título es obligatorio (hasta 40 caracteres) y se modera con las reglas estrictas, igual que el nombre. La respuesta trae el `listingId` con el que otras personas entran desde la lista.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Hugo\",\n  \"acceptedRules\": true,\n  \"visibility\": \"public\",\n  \"title\": \"Charla de fútbol\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\ninsomnia.test('visibility = public', () => insomnia.expect(insomnia.response.json().room.visibility).to.equal('public'));\ninsomnia.test('trae listingId', () => insomnia.expect(insomnia.response.json().room.listingId).to.be.a('string'));\nif (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('hugo_token', body.accessToken);\n  insomnia.environment.set('public_listing_id', body.room.listingId);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8160
+    },
+    {
+      "_id": "req_070",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Listar salas públicas (sin token)",
+      "description": "Igual que la portada del navegador: no exige token. Cada sala muestra solo `listingId`, `title`, `members` y `capacity`; nunca nombres, ids internos ni invitaciones. La lista cuenta conexiones WebSocket vivas: la sala de Hugo aparece cuando alguien la tiene abierta en el navegador.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/rooms/public",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 200', () => insomnia.expect(insomnia.response.code).to.equal(200));\ninsomnia.test('rooms es una lista', () => insomnia.expect(insomnia.response.json().rooms).to.be.an('array'));\ninsomnia.test('solo titulo y ocupacion', () => insomnia.response.json().rooms.forEach((room) => insomnia.expect(Object.keys(room)).to.have.members(['listingId', 'title', 'members', 'capacity'])));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8170
+    },
+    {
+      "_id": "req_071",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Iris entra desde la lista (listingId)",
+      "description": "Entrar desde la lista responde 403 `BANNED_FROM_ROOM` a quien fue expulsado de esa sala, 503 `ROOM_FULL` si no hay lugar y 404 `PUBLIC_ROOM_NOT_FOUND` si la sala ya no existe.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Iris\",\n  \"acceptedRules\": true,\n  \"listingId\": \"{{ _.public_listing_id }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 201', () => insomnia.expect(insomnia.response.code).to.equal(201));\ninsomnia.test('no es dueña', () => insomnia.expect(insomnia.response.json().user.isOwner).to.equal(false));\ninsomnia.test('visibility = public', () => insomnia.expect(insomnia.response.json().room.visibility).to.equal('public'));\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('iris_token', insomnia.response.json().accessToken);\n}",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8180
+    },
+    {
+      "_id": "req_072",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Iris envía una grosería en la sala pública → 422",
+      "description": "En una sala privada este mensaje se publica; en una pública se bloquea y cuenta una falta. Dos faltas silencian la sesión.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/messages",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"text\": \"que mierda de partido\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.iris_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 422', () => insomnia.expect(insomnia.response.code).to.equal(422));\ninsomnia.test('code = CONTENT_BLOCKED', () => insomnia.expect(insomnia.response.json().code).to.equal('CONTENT_BLOCKED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8190
+    },
+    {
+      "_id": "req_073",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Iris sube un PDF en la sala pública → 415",
+      "description": "La moderación no puede revisar por dentro un PDF ni una nota de voz: en las salas públicas solo se aceptan fotos JPEG y texto plano.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/attachments",
+      "body": {
+        "mimeType": "application/octet-stream",
+        "text": "%PDF-1.7\napuntes del partido"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/octet-stream"
+        },
+        {
+          "name": "X-File-Name",
+          "value": "apuntes.pdf"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.iris_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 415', () => insomnia.expect(insomnia.response.code).to.equal(415));\ninsomnia.test('code = FILE_TYPE_NOT_ALLOWED', () => insomnia.expect(insomnia.response.json().code).to.equal('FILE_TYPE_NOT_ALLOWED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8200
+    },
+    {
+      "_id": "req_074",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Entrar a la sala pública con un nombre grosero → 422",
+      "description": "El nombre se modera con las reglas de la sala de destino: en una sala privada este nombre se acepta.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Mierda\",\n  \"acceptedRules\": true,\n  \"listingId\": \"{{ _.public_listing_id }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 422', () => insomnia.expect(insomnia.response.code).to.equal(422));\ninsomnia.test('code = CONTENT_BLOCKED', () => insomnia.expect(insomnia.response.json().code).to.equal('CONTENT_BLOCKED'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8210
+    },
+    {
+      "_id": "req_075",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Entrar a una sala pública que ya no existe → 404",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Iris\",\n  \"acceptedRules\": true,\n  \"listingId\": \"00000000-0000-4000-8000-000000000000\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 404', () => insomnia.expect(insomnia.response.code).to.equal(404));\ninsomnia.test('code = PUBLIC_ROOM_NOT_FOUND', () => insomnia.expect(insomnia.response.json().code).to.equal('PUBLIC_ROOM_NOT_FOUND'));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8220
+    },
+    {
+      "_id": "req_076",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Iris cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.iris_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8230
+    },
+    {
+      "_id": "req_077",
+      "_type": "request",
+      "parentId": "fld_public",
+      "name": "Hugo cierra sesión",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.hugo_token }}",
+        "prefix": ""
+      },
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test('HTTP 204', () => insomnia.expect(insomnia.response.code).to.equal(204));",
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "metaSortKey": 8240
+    }
+  ]
+}

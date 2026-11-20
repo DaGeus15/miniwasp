@@ -1,0 +1,89 @@
+# Todas las imagenes estan fijadas por digest (indice multi-arquitectura) para que cada
+# despliegue use exactamente la misma imagen; el comentario indica el tag legible.
+# Para actualizar una imagen: docker pull <tag> y copiar su RepoDigest aqui.
+services:
+  # SonarQube escribe datos temporales de Elasticsearch y del motor fuera de los volumenes
+  # declarados (/opt/sonarqube/temp, /tmp); con read_only no arranca. Es una herramienta local
+  # de analisis que no se despliega y solo escucha en 127.0.0.1.
+  sonarqube: # nosemgrep: compose-service-writable-root-filesystem
+    # sonarqube:26.10.0.133078-community (misma version que la base de datos local)
+    image: sonarqube@sha256:f95aaa9016dd4e92c7d70691167a6d96dbb5d8acffd61eba1cb4335d364a7840
+    container_name: miniwasp-sonarqube
+    ports:
+      # Solo accesible desde esta maquina: SonarQube arranca con credenciales por defecto.
+      - "127.0.0.1:9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  # Solo corre bajo demanda: docker compose run --rm scanner
+  # El escaner escribe .scannerwork en el proyecto montado y su cache en ~/.sonar; corre
+  # solo bajo demanda con --rm y nunca queda expuesto en la red.
+  scanner: # nosemgrep: compose-service-writable-root-filesystem
+    # sonarsource/sonar-scanner-cli:latest (SonarScanner CLI 8.4.0.16527)
+    image: sonarsource/sonar-scanner-cli@sha256:6e6eca4d552695a98fb7dab84f0c1bd0885ebbfe272654d1552e24bd7f452d51
+    profiles: ["scan"]
+    environment:
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: ${SONAR_TOKEN:-}
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - .:/usr/src
+
+  # Publicacion por tunel: docker compose --profile tunnel up --build -d
+  # La app no publica puertos y esta en una red sin salida: solo cloudflared llega a ella,
+  # por eso la cabecera CF-Connecting-IP es confiable y nadie puede falsificarla.
+  app:
+    build: .
+    profiles: ["tunnel"]
+    environment:
+      # Dentro del contenedor debe escuchar en todas las interfaces para que cloudflared llegue.
+      HOST: "0.0.0.0"
+      TRUSTED_PROXY_HEADER: cf-connecting-ip
+    networks:
+      - tunnel_backend
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    restart: unless-stopped
+    # La verificacion de salud (GET /healthz) la define el HEALTHCHECK del Dockerfile.
+
+  tunnel:
+    # cloudflare/cloudflared:latest (version 2026.10.7)
+    image: cloudflare/cloudflared@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate --url http://app:3000
+    depends_on:
+      app:
+        # El tunel solo se publica cuando la app responde en /healthz.
+        condition: service_healthy
+    networks:
+      - default
+      - tunnel_backend
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    restart: unless-stopped
+
+networks:
+  tunnel_backend:
+    internal: true
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:

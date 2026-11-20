@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Aviso de privacidad · MiniWasp</title>
+    <link rel="icon" href="client/styles/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="client/styles/style.css">
+  </head>
+  <body>
+    <header class="notice-header">
+      <a class="brand" href="/">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <path class="brand-mark-cell" d="M16 3 27.3 9.5v13L16 29 4.7 22.5v-13Z"/>
+          <path class="brand-mark-bubble" d="M11 11.5h10a1.5 1.5 0 0 1 1.5 1.5v5.5A1.5 1.5 0 0 1 21 20h-5.5L12 22.6V20h-1a1.5 1.5 0 0 1-1.5-1.5V13a1.5 1.5 0 0 1 1.5-1.5Z"/>
+        </svg>MiniWasp
+      </a>
+      <a class="notice-back" href="/">Volver a MiniWasp</a>
+    </header>
+
+    <main class="notice">
+      <h1>Aviso de privacidad</h1>
+      <p class="notice-lead">MiniWasp usa lo mínimo para que la conversación funcione. Esto es todo lo que
+        pasa con tus datos.</p>
+
+      <h2>Qué datos se usan</h2>
+      <ul>
+        <li><strong>Audio y video:</strong> viajan cifrados directamente entre los dos navegadores de la
+          llamada. El servidor nunca los recibe y nada se graba.</li>
+        <li><strong>Nombre visible:</strong> lo eliges tú y lo ven las personas conectadas. Tu navegador lo
+          recuerda para la próxima vez.</li>
+        <li><strong>Mensajes del chat:</strong> se guardan solo en la memoria del servidor (los últimos 100 de
+          cada sala) y se borran cuando alguien borra el mensaje, cuando se cierra la sala o al reiniciar
+          el servidor.</li>
+        <li><strong>Fotos, notas de voz y archivos:</strong> se guardan cifrados con una clave propia de cada
+          sala que solo existe en la memoria del servidor. Quien guarda los archivos no puede leerlos. Se
+          borran junto con su mensaje o al cerrarse la sala, y en ese momento la clave se destruye. Un
+          archivo que subes y no envías se borra a los 5 minutos.</li>
+        <li><strong>Ubicación de tus fotos:</strong> tu navegador vuelve a dibujar cada foto antes de enviarla y
+          el servidor la vuelve a generar, así que se pierden sus datos ocultos, como la ubicación GPS de la
+          cámara.</li>
+        <li><strong>Sesión:</strong> una cookie protegida que vence a las 8 horas, al pulsar Salir o al cerrarse la
+          sala.</li>
+        <li><strong>Dirección IP:</strong> se usa para limitar abusos y no se registra. Durante una
+          videollamada, la otra persona y el servidor STUN ven tu IP pública, porque la conexión es
+          directa.</li>
+        <li><strong>Salas públicas:</strong> el título de una sala pública y cuántas personas hay en ella los
+          puede ver cualquiera en la portada, sin entrar. Los nombres de las personas nunca aparecen en esa
+          lista.</li>
+        <li><strong>Expulsiones en salas públicas:</strong> si te sacan de una sala pública, el servidor guarda
+          una huella seudónima de tu conexión (un código derivado de tu IP, nunca la IP) para que no puedas volver a esa sala. La
+          huella se borra cuando la sala se cierra.</li>
+        <li><strong>Susurros:</strong> solo empiezan si aceptas la invitación. Si eliges no recibir susurros, tu
+          navegador lo recuerda y quien te invite solo verá que no estás disponible.</li>
+      </ul>
+
+      <h2>Cámara y micrófono</h2>
+      <p>Solo se encienden cuando pulsas Videollamar o Contestar, o cuando grabas una nota de voz, y tu
+        navegador te pide permiso. Se apagan al terminar la llamada o la grabación.</p>
+
+      <h2>Revisión automática del contenido</h2>
+      <p>Para cumplir las <a href="rules.html">normas de la comunidad</a>, el servidor revisa los mensajes, los
+        nombres, los nombres de archivo, los textos y las fotos antes de publicarlos. La revisión de fotos la
+        hace una inteligencia artificial que corre dentro de MiniWasp: ningún mensaje ni foto se envía a otras
+        empresas. Lo que se bloquea no se publica ni se guarda, y el registro del servidor solo anota el tipo
+        de infracción, nunca el contenido.</p>
+
+      <h2>Comprobar que nadie escucha</h2>
+      <p>Al conectar, ambas personas ven un código de seguridad de 12 dígitos. Si al decirlo en voz
+        alta coincide, es prácticamente imposible que el servidor u otra persona esté interceptando la
+        llamada. Si no coincide, cuelga.</p>
+
+      <h2>Tus datos</h2>
+      <p>No hay cuentas ni base de datos. Puedes borrar tus mensajes, y sus archivos, para todas las personas de
+        la sala. Tu navegador recuerda tu nombre y que aceptaste las normas; para borrarlos, elimina los datos
+        de este sitio en la configuración del navegador.</p>
+    </main>
+  </body>
+</html>

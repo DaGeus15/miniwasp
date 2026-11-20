@@ -1,0 +1,116 @@
+# Reglas propias de Semgrep para docker-compose.yml.
+# Motivo: las reglas del registro (p/docker-compose) solo se activan si el archivo declara la
+# clave "version:", que la especificacion actual de Compose considera obsoleta; sin ella no
+# analizan nada. Checkov y Trivy tampoco soportan docker-compose. Estas reglas cubren el hueco.
+rules:
+  - id: compose-service-without-no-new-privileges
+    languages: [yaml]
+    severity: WARNING
+    message: >-
+      El servicio $SERVICE no declara security_opt "no-new-privileges:true"; un proceso del
+      contenedor podria elevar privilegios con binarios setuid.
+    metadata:
+      category: security
+      cwe: ["CWE-269: Improper Privilege Management"]
+      owasp: ["A05:2021 - Security Misconfiguration"]
+      references: ["https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html"]
+    patterns:
+      - pattern-inside: |
+          services:
+            ...
+      - pattern: |
+          $SERVICE:
+            ...
+            $SOURCE: $VALUE
+      - metavariable-regex:
+          metavariable: $SOURCE
+          regex: ^(image|build)$
+      - pattern-not: |
+          $SERVICE:
+            ...
+            security_opt:
+              - ...
+              - no-new-privileges:true
+              - ...
+      - focus-metavariable: $SERVICE
+
+  - id: compose-service-writable-root-filesystem
+    languages: [yaml]
+    severity: WARNING
+    message: >-
+      El servicio $SERVICE tiene el sistema de archivos raiz escribible; agrega "read_only: true"
+      y usa tmpfs o volumenes solo donde haga falta escribir.
+    metadata:
+      category: security
+      cwe: ["CWE-732: Incorrect Permission Assignment for Critical Resource"]
+      owasp: ["A05:2021 - Security Misconfiguration"]
+      references: ["https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html"]
+    patterns:
+      - pattern-inside: |
+          services:
+            ...
+      - pattern: |
+          $SERVICE:
+            ...
+            $SOURCE: $VALUE
+      - metavariable-regex:
+          metavariable: $SOURCE
+          regex: ^(image|build)$
+      - pattern-not: |
+          $SERVICE:
+            ...
+            read_only: true
+      - focus-metavariable: $SERVICE
+
+  - id: compose-image-not-pinned-by-digest
+    languages: [yaml]
+    severity: WARNING
+    message: >-
+      La imagen $IMAGE no esta fijada por digest (@sha256:...); el tag puede cambiar de contenido
+      sin aviso y romper la reproducibilidad o introducir codigo no revisado.
+    metadata:
+      category: security
+      cwe: ["CWE-494: Download of Code Without Integrity Check"]
+      owasp: ["A08:2021 - Software and Data Integrity Failures"]
+    patterns:
+      - pattern-inside: |
+          services:
+            ...
+      - pattern: "image: $IMAGE"
+      - metavariable-regex:
+          metavariable: $IMAGE
+          regex: ^(?!.*@sha256:[a-f0-9]{64}$).*
+      - focus-metavariable: $IMAGE
+
+  - id: compose-privileged-service
+    languages: [yaml]
+    severity: ERROR
+    message: El servicio $SERVICE corre en modo privilegiado y tiene acceso total al host.
+    metadata:
+      category: security
+      cwe: ["CWE-250: Execution with Unnecessary Privileges"]
+      owasp: ["A05:2021 - Security Misconfiguration"]
+    patterns:
+      - pattern-inside: |
+          services:
+            ...
+      - pattern: |
+          $SERVICE:
+            ...
+            privileged: true
+      - focus-metavariable: $SERVICE
+
+  - id: compose-docker-socket-mounted
+    languages: [yaml]
+    severity: ERROR
+    message: >-
+      Se monta el socket de Docker en un contenedor; equivale a dar acceso root al host.
+    metadata:
+      category: security
+      cwe: ["CWE-250: Execution with Unnecessary Privileges"]
+      owasp: ["A05:2021 - Security Misconfiguration"]
+    patterns:
+      - pattern-inside: |
+          services:
+            ...
+      - pattern-regex: /var/run/docker\.sock

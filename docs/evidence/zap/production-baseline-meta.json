@@ -1,0 +1,16 @@
+{
+  "id": "production-baseline",
+  "title": "Baseline de produccion: solo pasivo (sin autenticar)",
+  "target": "https://miniwasp-production.up.railway.app",
+  "startedAt": "2026-11-19T00:07:21.923Z",
+  "finishedAt": "2026-11-19T00:09:26.927Z",
+  "zapExitCode": 2,
+  "command": "docker run --rm --name miniwasp-zap-production-baseline-23456 --mount type=bind,source=D:\\UTA\\8vo_Semestre\\Seguridad de Software\\miniWasp\\scripts\\zap,target=/zap/hooks,readonly --mount type=bind,source=D:\\UTA\\8vo_Semestre\\Seguridad de Software\\miniWasp\\docs\\evidence\\zap,target=/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t https://miniwasp-production.up.railway.app -m 1 -r production-baseline-report.html -J production-baseline-report.json -w production-baseline-report.md",
+  "sourceStable": null,
+  "verdict": {
+    "passed": false,
+    "riskyCount": 0,
+    "informationalTypes": 2,
+    "acceptedCount": 0
+  }
+}

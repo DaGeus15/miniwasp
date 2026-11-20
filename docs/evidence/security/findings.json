@@ -1,0 +1,127 @@
+{
+  "generatedAt": "2026-11-20T21:49:03.153Z",
+  "passed": true,
+  "blocking": [],
+  "findings": [
+    {
+      "tool": "semgrep",
+      "ruleId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "severity": "MEDIUM",
+      "file": "scripts/load/lib/session-pool.mjs",
+      "line": 19,
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used."
+    },
+    {
+      "tool": "semgrep",
+      "ruleId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "severity": "MEDIUM",
+      "file": "scripts/load/lib/session-pool.mjs",
+      "line": 60,
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used."
+    },
+    {
+      "tool": "semgrep",
+      "ruleId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "severity": "MEDIUM",
+      "file": "scripts/load/lib/signaling-client.mjs",
+      "line": 40,
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used."
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-107496",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libcrypto3@3.5.9-r0: Issue summary: Encrypting a CMS message to an EC certificate whose gro ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-88822",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libcrypto3@3.5.9-r0: Issue summary: QUIC, when performing automated peer detection, may all ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-88823",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libcrypto3@3.5.9-r0: Issue summary: The AES-GCM-SIV implementation treats a zero-length Add ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-95691",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libcrypto3@3.5.9-r0: Issue summary: A retransmitted QUIC CRYPTO frame can release packet st ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-95692",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libcrypto3@3.5.9-r0: Issue summary: Setting an AES-GCM-SIV IV shorter than the expected non ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-107496",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libssl3@3.5.9-r0: Issue summary: Encrypting a CMS message to an EC certificate whose gro ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-88822",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libssl3@3.5.9-r0: Issue summary: QUIC, when performing automated peer detection, may all ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-88823",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libssl3@3.5.9-r0: Issue summary: The AES-GCM-SIV implementation treats a zero-length Add ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-95691",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libssl3@3.5.9-r0: Issue summary: A retransmitted QUIC CRYPTO frame can release packet st ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "trivy",
+      "ruleId": "CVE-2026-95692",
+      "severity": "MEDIUM",
+      "file": "/work/miniwasp-image.tar (alpine 3.24.4)",
+      "line": null,
+      "message": "libssl3@3.5.9-r0: Issue summary: Setting an AES-GCM-SIV IV shorter than the expected non ... (corregido en 3.5.9-r1)"
+    },
+    {
+      "tool": "license-policy",
+      "ruleId": "license:LGPL-3.0-only",
+      "severity": "LOW",
+      "file": "package-lock.json",
+      "line": null,
+      "message": "eslint-plugin-sonarjs@4.2.2 usa LGPL-3.0-only (solo desarrollo)"
+    },
+    {
+      "tool": "license-policy",
+      "ruleId": "license:LGPL-3.0-only",
+      "severity": "LOW",
+      "file": "package-lock.json",
+      "line": null,
+      "message": "@sonarsource/analyzer-commons-configurations@2.31.0-5284 usa LGPL-3.0-only (solo desarrollo)"
+    }
+  ]
+}

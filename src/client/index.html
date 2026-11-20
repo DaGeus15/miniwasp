@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>MiniWasp</title>
+    <link rel="icon" href="client/styles/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="client/styles/style.css">
+  </head>
+  <body>
+    <section id="home" class="home" aria-labelledby="home-title" hidden>
+      <div class="home-panel">
+        <h1 id="home-title" class="brand brand-home">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+            <path class="brand-mark-cell" d="M16 3 27.3 9.5v13L16 29 4.7 22.5v-13Z"/>
+            <path class="brand-mark-bubble" d="M11 11.5h10a1.5 1.5 0 0 1 1.5 1.5v5.5A1.5 1.5 0 0 1 21 20h-5.5L12 22.6V20h-1a1.5 1.5 0 0 1-1.5-1.5V13a1.5 1.5 0 0 1 1.5-1.5Z"/>
+          </svg>MiniWasp
+        </h1>
+        <p class="home-headline">Habla en una sala que desaparece.</p>
+        <p class="home-tagline">Salas temporales de chat y videollamada. Sin cuentas ni número de teléfono: crea una sala y comparte el enlace.</p>
+        <button id="create-room" class="home-create button button-primary" type="button">Crear sala</button>
+        <p class="home-divider"><span>o entra con una invitación</span></p>
+        <form id="join-form" class="join-form">
+          <label class="field">
+            <span class="field-label">ID o enlace de invitación</span>
+            <input id="invite-token" class="input-mono" name="invite-token" autocomplete="off" spellcheck="false" placeholder="Pega el ID o el enlace" required>
+          </label>
+          <button class="button button-secondary" type="submit">Unirme</button>
+        </form>
+        <label class="rules-consent">
+          <input id="accept-rules" type="checkbox">
+          <span>Tengo 16 años o más y acepto las <a href="rules.html">normas de la comunidad</a>: nada de contenido sexual, ilegal, violento ni de odio.</span>
+        </label>
+        <p id="home-error" class="home-error" role="alert" hidden></p>
+        <section class="public-rooms" aria-labelledby="public-rooms-title">
+          <div class="public-rooms-header">
+            <h2 id="public-rooms-title" class="public-rooms-heading">Salas públicas</h2>
+            <button id="refresh-public-rooms" class="public-rooms-refresh" type="button">Actualizar</button>
+          </div>
+          <p class="public-rooms-hint">Abiertas a cualquiera y con moderación estricta: sin groserías, notas de voz ni PDF.</p>
+          <ul id="public-room-list" class="public-room-list"></ul>
+          <p id="public-rooms-empty" class="public-rooms-empty">No hay salas públicas abiertas. ¡Crea la primera!</p>
+          <form id="public-room-form" class="public-room-form">
+            <label class="field">
+              <span class="field-label">Título de una sala pública nueva</span>
+              <input id="public-room-title" name="public-room-title" autocomplete="off" placeholder="Por ejemplo: Fútbol ecuatoriano" required>
+            </label>
+            <button class="button button-secondary" type="submit">Crear pública</button>
+          </form>
+        </section>
+        <ul class="home-facts">
+          <li>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3h8a1.5 1.5 0 0 1 1.5 1.5V13m0 4.5v2A1.5 1.5 0 0 1 16 21H8a1.5 1.5 0 0 1-1.5-1.5v-13M3 3l18 18"/></svg>
+            Sin cuentas ni número de teléfono
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5v-3a4 4 0 0 1 8 0v3"/></svg>
+            Video directo y cifrado entre navegadores
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.6 3.2L12 11.5l2.4-1.8A4 4 0 0 0 16 6.5V3M8 21v-3.5a4 4 0 0 1 1.6-3.2l2.4-1.8 2.4 1.8a4 4 0 0 1 1.6 3.2V21"/></svg>
+            La sala se cierra cuando todos salen
+          </li>
+        </ul>
+        <p class="home-links">
+          <a class="privacy-link" href="privacy.html">Aviso de privacidad</a>
+          <a class="rules-link" href="rules.html">Normas de la comunidad</a>
+        </p>
+      </div>
+
+      <div class="home-stage" aria-hidden="true">
+        <svg class="comb" focusable="false">
+          <defs>
+            <pattern id="comb-cells" width="48.5" height="84" patternUnits="userSpaceOnUse">
+              <path d="M24.25-14 48.5 0v28L24.25 42 0 28V0ZM0 28l24.25 14v28L0 84l-24.25-14V42Zm48.5 0 24.25 14v28L48.5 84 24.25 70V42ZM24.25 70 48.5 84v28l-24.25 14L0 112V84Z"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#comb-cells)"/>
+        </svg>
+        <div class="ticket-art">
+          <div class="ticket-art-body">
+            <div class="ticket-art-main">
+              <span class="ticket-art-brand">MiniWasp</span>
+              <span class="ticket-art-title">Sala temporal</span>
+              <span class="ticket-art-code">K7QM · 4XRT · 9WDA</span>
+              <span class="ticket-art-note">Válida mientras quede alguien dentro</span>
+            </div>
+            <div class="ticket-art-stub"><span>Invitación</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main id="chat" class="chat" hidden>
+      <header class="chat-header">
+        <h1 class="brand">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+            <path class="brand-mark-cell" d="M16 3 27.3 9.5v13L16 29 4.7 22.5v-13Z"/>
+            <path class="brand-mark-bubble" d="M11 11.5h10a1.5 1.5 0 0 1 1.5 1.5v5.5A1.5 1.5 0 0 1 21 20h-5.5L12 22.6V20h-1a1.5 1.5 0 0 1-1.5-1.5V13a1.5 1.5 0 0 1 1.5-1.5Z"/>
+          </svg>MiniWasp
+        </h1>
+        <p id="status" class="status" role="status">Conectando…</p>
+        <a class="privacy-link privacy-link-header" href="privacy.html">Privacidad</a>
+        <button id="logout" class="logout" type="button">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m5-4 4-4-4-4m4 4H9"/></svg>
+          <span class="logout-label">Salir de la sala</span>
+        </button>
+      </header>
+
+      <section class="room-bar" aria-label="Invitación a la sala">
+        <p id="room-kind" class="room-kind"></p>
+        <span class="room-bar-label">Invitación</span>
+        <code id="invite-code" class="invite-code"></code>
+        <button id="copy-invite" class="room-bar-button room-bar-copy" type="button">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>
+          <span class="room-bar-button-label">Copiar enlace</span>
+        </button>
+        <button id="rotate-invite" class="room-bar-button room-bar-rotate" type="button" hidden>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8m0-4v4h4m-4 5a8 8 0 0 0 14.3 4.9L20 16m0 4v-4h-4"/></svg>
+          <span class="room-bar-button-label">Nuevo enlace</span>
+        </button>
+        <span id="copy-status" class="copy-status" role="status"></span>
+        <p class="room-bar-hint">Quien tenga el enlace puede entrar. La sala se cierra cuando todos salen.</p>
+      </section>
+
+      <section class="people" aria-labelledby="people-title">
+        <h2 id="people-title" class="people-title">Conectados</h2>
+        <p id="people-empty" class="people-empty">Nadie más está conectado</p>
+        <ul id="people-list" class="people-list"></ul>
+        <label id="whisper-preference" class="whisper-preference" hidden>
+          <input id="accept-whispers" type="checkbox" checked>
+          <span>Recibir invitaciones a hablar en privado</span>
+        </label>
+      </section>
+
+      <section id="whisper-dialog" class="whisper-dialog" role="alertdialog" aria-labelledby="whisper-from" hidden>
+        <p id="whisper-from" class="whisper-from"></p>
+        <div class="whisper-actions">
+          <button id="whisper-accept" class="button button-primary" type="button">Aceptar</button>
+          <button id="whisper-reject" class="button button-secondary" type="button">Rechazar</button>
+        </div>
+      </section>
+
+      <p class="messages-empty">
+        <svg class="messages-empty-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <path class="brand-mark-cell" d="M16 3 27.3 9.5v13L16 29 4.7 22.5v-13Z"/>
+          <path class="brand-mark-bubble" d="M11 11.5h10a1.5 1.5 0 0 1 1.5 1.5v5.5A1.5 1.5 0 0 1 21 20h-5.5L12 22.6V20h-1a1.5 1.5 0 0 1-1.5-1.5V13a1.5 1.5 0 0 1 1.5-1.5Z"/>
+        </svg>
+        <strong class="messages-empty-title">La sala está lista</strong>
+        <span class="messages-empty-text">Comparte la invitación y escribe el primer mensaje.</span>
+      </p>
+
+      <ul id="messages" class="messages" aria-label="Mensajes" aria-live="polite"></ul>
+
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <form id="composer" class="composer">
+        <div id="attachment-chip" class="attachment-chip" hidden>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Zm0 0v5h5"/></svg>
+          <span id="attachment-name" class="attachment-name"></span>
+          <button id="attachment-remove" class="attachment-remove" type="button" aria-label="Quitar el archivo">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+        <p id="voice-status" class="voice-status" role="status" hidden>
+          <span class="voice-dot" aria-hidden="true"></span>
+          <span>Grabando</span>
+          <span id="voice-timer" class="voice-timer">0:00</span>
+          <button id="voice-cancel" class="voice-cancel" type="button">Cancelar</button>
+        </p>
+        <label class="field field-name">
+          <span class="field-label">Tu nombre</span>
+          <input id="name" name="name" autocomplete="nickname" placeholder="¿Cómo te llamas?" required>
+        </label>
+        <button id="attach-file" class="composer-tool composer-attach" type="button" aria-label="Adjuntar foto o documento">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m20 11.5-7.8 7.8a5 5 0 0 1-7.1-7.1l8.2-8.2a3.3 3.3 0 0 1 4.7 4.7l-8.2 8.2a1.7 1.7 0 0 1-2.4-2.4l7.6-7.6"/></svg>
+        </button>
+        <label class="visually-hidden" for="file-input">Archivo para adjuntar</label>
+        <input id="file-input" class="visually-hidden" type="file" tabindex="-1">
+        <label class="field field-text">
+          <span class="field-label visually-hidden">Mensaje</span>
+          <input id="text" name="text" autocomplete="off" placeholder="Escribe un mensaje">
+        </label>
+        <button id="record-voice" class="composer-tool composer-voice" type="button" aria-pressed="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>
+        </button>
+        <button class="composer-send" type="submit">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+          <span class="composer-send-label">Enviar</span>
+        </button>
+      </form>
+    </main>
+
+    <section id="call" class="call" role="dialog" aria-labelledby="call-peer" hidden>
+      <header class="call-header">
+        <h2 id="call-peer" class="call-peer">Videollamada</h2>
+        <p id="call-status" class="call-status" role="status"></p>
+        <p id="call-security-code" class="call-security-code" hidden></p>
+      </header>
+
+      <div class="call-stage">
+        <div class="call-placeholder" aria-hidden="true">
+          <svg class="call-placeholder-mark" viewBox="0 0 32 32" focusable="false">
+            <path class="brand-mark-cell" d="M16 3 27.3 9.5v13L16 29 4.7 22.5v-13Z"/>
+            <path class="brand-mark-bubble" d="M11 11.5h10a1.5 1.5 0 0 1 1.5 1.5v5.5A1.5 1.5 0 0 1 21 20h-5.5L12 22.6V20h-1a1.5 1.5 0 0 1-1.5-1.5V13a1.5 1.5 0 0 1 1.5-1.5Z"/>
+          </svg>
+        </div>
+        <video id="remote-video" class="call-video-remote" autoplay playsinline></video>
+        <video id="local-video" class="call-video-local" autoplay playsinline muted hidden></video>
+      </div>
+
+      <div class="call-controls">
+        <button id="call-accept" class="call-button call-button-accept" type="button">Contestar</button>
+        <button id="call-reject" class="call-button call-button-danger call-button-reject" type="button">Rechazar</button>
+        <button id="call-microphone" class="call-button call-button-mic" type="button" aria-pressed="false">Silenciar</button>
+        <button id="call-camera" class="call-button call-button-camera" type="button" aria-pressed="false">Apagar cámara</button>
+        <button id="call-hangup" class="call-button call-button-danger call-button-hangup" type="button">Colgar</button>
+      </div>
+    </section>
+
+    <script type="module" src="client/app.js"></script>
+  </body>
+</html>

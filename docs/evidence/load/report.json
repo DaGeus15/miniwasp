@@ -1,0 +1,1121 @@
+{
+  "environment": {
+    "os": "Windows_NT 10.0.26300 (win32 x64)",
+    "osVersion": "Windows 11 Home",
+    "cpuModel": "Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz",
+    "logicalCores": 8,
+    "totalMemoryGiB": 15.8,
+    "nodeVersion": "v24.11.0",
+    "date": "2026-11-12T00:39:37.298Z",
+    "appUrl": "https://127.0.0.1:54378 (puerto libre de esta corrida)"
+  },
+  "commands": [
+    "npm install",
+    "npm run load"
+  ],
+  "design": [
+    "Todo corre en una sola maquina: el generador de carga comparte CPU con el servidor y la red es loopback (sin latencia ni perdida reales).",
+    "Los limites del servidor son por IP. Si todos los clientes salieran de 127.0.0.1 solo cabrian 30 conexiones, 20 invitaciones/30 s y 300 senales/10 s en total. Para simular varios equipos cada cliente usa su propia direccion de origen loopback (127.0.x.y), 4 clientes por direccion, y cada etapa usa un rango distinto.",
+    "Sesiones: una por usuario simulado via POST /session con cabecera Origin; como el acceso admite 6 intentos/min por IP, cada direccion de acceso hace 4. La cookie no esta atada a la IP, asi que la conexion WebSocket puede salir de otra direccion.",
+    "Carga por IP y etapa: 2 parejas x 3 ciclos = 6 invitaciones (limite 20/30 s) y 148 mensajes del limitador de senales (limite 300/10 s). No se envia chat (limite 10/5 s).",
+    "Ciclo por pareja: invite -> ringing/incoming, accept -> accepted, offer y answer con SDP sintetico de 5920 caracteres (tamano de la oferta real observada en E2E-03), 10 candidatos de sondeo ida y vuelta y hangup -> call-ended en ambos lados. Ciclos secuenciales por pareja; parejas en paralelo.",
+    "Despues de los ciclos los clientes quedan conectados 3000 ms (CPU en reposo con N conexiones) y luego se desconectan; se espera a que /metrics muestre connectionsActive=0 y callsActive=0.",
+    "CPU y memoria del proceso del servidor se muestrean cada 500 ms desde afuera (PowerShell Get-Process: TotalProcessorTime, WorkingSet64, PrivateMemorySize64). CPU expresada como % de un nucleo. No se fuerza la recoleccion de basura."
+  ],
+  "settings": {
+    "cycles": 3,
+    "probes": 10,
+    "holdMs": 3000,
+    "settleMs": 1000,
+    "sdp": "5920 caracteres",
+    "clientsPerAddress": 4,
+    "stageSizes": [
+      10,
+      25,
+      50,
+      100,
+      150
+    ],
+    "repeats": "2 x 100"
+  },
+  "sessions": {
+    "created": 206,
+    "loginMs": 1063
+  },
+  "stages": [
+    {
+      "name": "S1-10",
+      "clients": 10,
+      "sourceAddresses": 3,
+      "connected": 10,
+      "rejectedStatuses": {},
+      "connectFailures": [],
+      "connectMs": {
+        "count": 10,
+        "min": 41.07,
+        "p50": 43.39,
+        "p95": 47.76,
+        "p99": 47.76,
+        "max": 47.76,
+        "mean": 44.25
+      },
+      "presenceConvergenceMs": 12.1,
+      "calls": {
+        "pairs": 5,
+        "attempted": 15,
+        "completed": 15,
+        "failures": {}
+      },
+      "latencies": {
+        "inviteRoundTripMs": {
+          "count": 15,
+          "min": 1.55,
+          "p50": 2.77,
+          "p95": 4.56,
+          "p99": 4.56,
+          "max": 4.56,
+          "mean": 2.86
+        },
+        "probeRoundTripMs": {
+          "count": 150,
+          "min": 1.37,
+          "p50": 1.78,
+          "p95": 3.06,
+          "p99": 4.07,
+          "max": 4.19,
+          "mean": 1.94
+        },
+        "hangupToEndedMs": {
+          "count": 15,
+          "min": 0.9,
+          "p50": 2.56,
+          "p95": 3.04,
+          "p99": 3.04,
+          "max": 3.04,
+          "mean": 2.29
+        },
+        "inviteToIncomingMs": {
+          "count": 15,
+          "min": 1.76,
+          "p50": 2.84,
+          "p95": 4.68,
+          "p99": 4.68,
+          "max": 4.68,
+          "mean": 2.96
+        },
+        "oneWayRelayMs": {
+          "count": 60,
+          "min": 1.22,
+          "p50": 2.43,
+          "p95": 3.26,
+          "p99": 4.68,
+          "max": 4.68,
+          "mean": 2.43
+        },
+        "acceptToAcceptedMs": {
+          "count": 15,
+          "min": 2.34,
+          "p50": 2.47,
+          "p95": 3.22,
+          "p99": 3.22,
+          "max": 3.22,
+          "mean": 2.55
+        },
+        "offerRelayMs": {
+          "count": 15,
+          "min": 1.56,
+          "p50": 1.9,
+          "p95": 3.26,
+          "p99": 3.26,
+          "max": 3.26,
+          "mean": 2.26
+        },
+        "answerRelayMs": {
+          "count": 15,
+          "min": 1.22,
+          "p50": 2.06,
+          "p95": 2.88,
+          "p99": 2.88,
+          "max": 2.88,
+          "mean": 1.95
+        }
+      },
+      "serverErrorEvents": 0,
+      "serverErrorTexts": {},
+      "unexpectedCloses": 0,
+      "drainMs": 16.5,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 15,
+        "callsActive": 0,
+        "callsEnded": 15
+      },
+      "serverDuringActivity": {
+        "samples": 3,
+        "avgCpuPercentOneCore": 37.9,
+        "peakCpuPercentOneCore": 40.5,
+        "peakWorkingSetMiB": 78.1,
+        "endWorkingSetMiB": 78.1,
+        "endPrivateMiB": 54.7
+      },
+      "serverWhileConnectedIdle": {
+        "samples": 13,
+        "avgCpuPercentOneCore": 5.9,
+        "peakCpuPercentOneCore": 40.5,
+        "peakWorkingSetMiB": 78.1,
+        "endWorkingSetMiB": 68.4,
+        "endPrivateMiB": 36.6
+      },
+      "serverAfterDrain": {
+        "t": 1794443921026,
+        "cpuMs": 1531.25,
+        "workingSetBytes": 71766016,
+        "privateBytes": 38330368
+      },
+      "durationMs": 4188
+    },
+    {
+      "name": "S2-25",
+      "clients": 25,
+      "sourceAddresses": 7,
+      "connected": 25,
+      "rejectedStatuses": {},
+      "connectFailures": [],
+      "connectMs": {
+        "count": 25,
+        "min": 94.77,
+        "p50": 99.86,
+        "p95": 103.92,
+        "p99": 104.91,
+        "max": 104.91,
+        "mean": 99.74
+      },
+      "presenceConvergenceMs": 25.4,
+      "calls": {
+        "pairs": 12,
+        "attempted": 36,
+        "completed": 36,
+        "failures": {}
+      },
+      "latencies": {
+        "inviteRoundTripMs": {
+          "count": 36,
+          "min": 1.88,
+          "p50": 5.63,
+          "p95": 7.53,
+          "p99": 7.56,
+          "max": 7.56,
+          "mean": 5.2
+        },
+        "probeRoundTripMs": {
+          "count": 360,
+          "min": 2.98,
+          "p50": 3.8,
+          "p95": 5.6,
+          "p99": 6.27,
+          "max": 6.63,
+          "mean": 4.04
+        },
+        "hangupToEndedMs": {
+          "count": 36,
+          "min": 1.5,
+          "p50": 4.34,
+          "p95": 5.34,
+          "p99": 5.46,
+          "max": 5.46,
+          "mean": 4.06
+        },
+        "inviteToIncomingMs": {
+          "count": 36,
+          "min": 1.98,
+          "p50": 5.69,
+          "p95": 7.63,
+          "p99": 7.63,
+          "max": 7.63,
+          "mean": 5.28
+        },
+        "oneWayRelayMs": {
+          "count": 144,
+          "min": 1.98,
+          "p50": 4.88,
+          "p95": 6.77,
+          "p99": 7.63,
+          "max": 7.63,
+          "mean": 4.63
+        },
+        "acceptToAcceptedMs": {
+          "count": 36,
+          "min": 4.93,
+          "p50": 6.32,
+          "p95": 6.8,
+          "p99": 6.83,
+          "max": 6.83,
+          "mean": 6.12
+        },
+        "offerRelayMs": {
+          "count": 36,
+          "min": 2.8,
+          "p50": 3.21,
+          "p95": 6.15,
+          "p99": 6.93,
+          "max": 6.93,
+          "mean": 3.9
+        },
+        "answerRelayMs": {
+          "count": 36,
+          "min": 2.27,
+          "p50": 3.27,
+          "p95": 3.87,
+          "p99": 3.87,
+          "max": 3.87,
+          "mean": 3.23
+        }
+      },
+      "serverErrorEvents": 0,
+      "serverErrorTexts": {},
+      "unexpectedCloses": 0,
+      "drainMs": 19,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 51,
+        "callsActive": 0,
+        "callsEnded": 51
+      },
+      "serverDuringActivity": {
+        "samples": 3,
+        "avgCpuPercentOneCore": 64.4,
+        "peakCpuPercentOneCore": 69.7,
+        "peakWorkingSetMiB": 69.6,
+        "endWorkingSetMiB": 69.6,
+        "endPrivateMiB": 38.5
+      },
+      "serverWhileConnectedIdle": {
+        "samples": 14,
+        "avgCpuPercentOneCore": 5.9,
+        "peakCpuPercentOneCore": 69.7,
+        "peakWorkingSetMiB": 69.7,
+        "endWorkingSetMiB": 67.6,
+        "endPrivateMiB": 34.6
+      },
+      "serverAfterDrain": {
+        "t": 1794443926550,
+        "cpuMs": 1953.125,
+        "workingSetBytes": 70918144,
+        "privateBytes": 36274176
+      },
+      "durationMs": 4370
+    },
+    {
+      "name": "S3-50",
+      "clients": 50,
+      "sourceAddresses": 13,
+      "connected": 50,
+      "rejectedStatuses": {},
+      "connectFailures": [],
+      "connectMs": {
+        "count": 50,
+        "min": 160.3,
+        "p50": 171.39,
+        "p95": 185.51,
+        "p99": 188.5,
+        "max": 188.5,
+        "mean": 171.96
+      },
+      "presenceConvergenceMs": 128.6,
+      "calls": {
+        "pairs": 25,
+        "attempted": 75,
+        "completed": 75,
+        "failures": {}
+      },
+      "latencies": {
+        "inviteRoundTripMs": {
+          "count": 75,
+          "min": 4.35,
+          "p50": 9.77,
+          "p95": 14.2,
+          "p99": 16.36,
+          "max": 16.36,
+          "mean": 10.3
+        },
+        "probeRoundTripMs": {
+          "count": 750,
+          "min": 4.77,
+          "p50": 7.56,
+          "p95": 11.86,
+          "p99": 12.86,
+          "max": 13.61,
+          "mean": 7.89
+        },
+        "hangupToEndedMs": {
+          "count": 75,
+          "min": 3.61,
+          "p50": 7.98,
+          "p95": 12.23,
+          "p99": 12.47,
+          "max": 12.47,
+          "mean": 8.36
+        },
+        "inviteToIncomingMs": {
+          "count": 75,
+          "min": 4.5,
+          "p50": 9.83,
+          "p95": 14.3,
+          "p99": 16.43,
+          "max": 16.43,
+          "mean": 10.37
+        },
+        "oneWayRelayMs": {
+          "count": 300,
+          "min": 3.76,
+          "p50": 8.62,
+          "p95": 13.47,
+          "p99": 14.72,
+          "max": 16.43,
+          "mean": 8.66
+        },
+        "acceptToAcceptedMs": {
+          "count": 75,
+          "min": 7.48,
+          "p50": 12.09,
+          "p95": 14.4,
+          "p99": 14.72,
+          "max": 14.72,
+          "mean": 11.13
+        },
+        "offerRelayMs": {
+          "count": 75,
+          "min": 6.16,
+          "p50": 6.98,
+          "p95": 9.85,
+          "p99": 12.46,
+          "max": 12.46,
+          "mean": 7.85
+        },
+        "answerRelayMs": {
+          "count": 75,
+          "min": 3.76,
+          "p50": 5.24,
+          "p95": 6.48,
+          "p99": 6.63,
+          "max": 6.63,
+          "mean": 5.3
+        }
+      },
+      "serverErrorEvents": 0,
+      "serverErrorTexts": {},
+      "unexpectedCloses": 0,
+      "drainMs": 32.9,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 126,
+        "callsActive": 0,
+        "callsEnded": 126
+      },
+      "serverDuringActivity": {
+        "samples": 5,
+        "avgCpuPercentOneCore": 56.5,
+        "peakCpuPercentOneCore": 102.6,
+        "peakWorkingSetMiB": 76.8,
+        "endWorkingSetMiB": 76.8,
+        "endPrivateMiB": 47.9
+      },
+      "serverWhileConnectedIdle": {
+        "samples": 13,
+        "avgCpuPercentOneCore": 5.4,
+        "peakCpuPercentOneCore": 58.1,
+        "peakWorkingSetMiB": 76.8,
+        "endWorkingSetMiB": 72.9,
+        "endPrivateMiB": 41.9
+      },
+      "serverAfterDrain": {
+        "t": 1794443932079,
+        "cpuMs": 2656.25,
+        "workingSetBytes": 73363456,
+        "privateBytes": 39489536
+      },
+      "durationMs": 4742
+    },
+    {
+      "name": "S4-100",
+      "clients": 100,
+      "sourceAddresses": 25,
+      "connected": 100,
+      "rejectedStatuses": {},
+      "connectFailures": [],
+      "connectMs": {
+        "count": 100,
+        "min": 329.87,
+        "p50": 391.07,
+        "p95": 418.21,
+        "p99": 420.6,
+        "max": 421.35,
+        "mean": 387.98
+      },
+      "presenceConvergenceMs": 599.3,
+      "calls": {
+        "pairs": 50,
+        "attempted": 150,
+        "completed": 150,
+        "failures": {}
+      },
+      "latencies": {
+        "inviteRoundTripMs": {
+          "count": 150,
+          "min": 6.36,
+          "p50": 22.49,
+          "p95": 41.17,
+          "p99": 41.32,
+          "max": 41.35,
+          "mean": 23.36
+        },
+        "probeRoundTripMs": {
+          "count": 1500,
+          "min": 12.14,
+          "p50": 14.9,
+          "p95": 17.25,
+          "p99": 30.71,
+          "max": 31.55,
+          "mean": 15.39
+        },
+        "hangupToEndedMs": {
+          "count": 150,
+          "min": 7.91,
+          "p50": 14.36,
+          "p95": 19.59,
+          "p99": 21.4,
+          "max": 21.81,
+          "mean": 15.15
+        },
+        "inviteToIncomingMs": {
+          "count": 150,
+          "min": 6.45,
+          "p50": 22.55,
+          "p95": 41.24,
+          "p99": 41.37,
+          "max": 41.41,
+          "mean": 23.57
+        },
+        "oneWayRelayMs": {
+          "count": 600,
+          "min": 6.45,
+          "p50": 17.05,
+          "p95": 35.98,
+          "p99": 41.26,
+          "max": 41.41,
+          "mean": 18.46
+        },
+        "acceptToAcceptedMs": {
+          "count": 150,
+          "min": 14.65,
+          "p50": 21.37,
+          "p95": 26.18,
+          "p99": 31.9,
+          "max": 32.05,
+          "mean": 21.95
+        },
+        "offerRelayMs": {
+          "count": 150,
+          "min": 11.26,
+          "p50": 13.05,
+          "p95": 23.16,
+          "p99": 23.42,
+          "max": 23.43,
+          "mean": 14.98
+        },
+        "answerRelayMs": {
+          "count": 150,
+          "min": 9.32,
+          "p50": 12.55,
+          "p95": 18.48,
+          "p99": 19.58,
+          "max": 19.63,
+          "mean": 13.33
+        }
+      },
+      "serverErrorEvents": 0,
+      "serverErrorTexts": {},
+      "unexpectedCloses": 0,
+      "drainMs": 77.3,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 276,
+        "callsActive": 0,
+        "callsEnded": 276
+      },
+      "serverDuringActivity": {
+        "samples": 9,
+        "avgCpuPercentOneCore": 70.8,
+        "peakCpuPercentOneCore": 139.8,
+        "peakWorkingSetMiB": 108.5,
+        "endWorkingSetMiB": 108.5,
+        "endPrivateMiB": 82.8
+      },
+      "serverWhileConnectedIdle": {
+        "samples": 14,
+        "avgCpuPercentOneCore": 9.6,
+        "peakCpuPercentOneCore": 75.8,
+        "peakWorkingSetMiB": 108.6,
+        "endWorkingSetMiB": 76.5,
+        "endPrivateMiB": 44.8
+      },
+      "serverAfterDrain": {
+        "t": 1794443939173,
+        "cpuMs": 4312.5,
+        "workingSetBytes": 80244736,
+        "privateBytes": 46985216
+      },
+      "durationMs": 5862
+    },
+    {
+      "name": "S5-150",
+      "clients": 150,
+      "sourceAddresses": 38,
+      "connected": 150,
+      "rejectedStatuses": {},
+      "connectFailures": [],
+      "connectMs": {
+        "count": 150,
+        "min": 480.34,
+        "p50": 521.97,
+        "p95": 561.21,
+        "p99": 565.91,
+        "max": 566.7,
+        "mean": 523.43
+      },
+      "presenceConvergenceMs": 1762.7,
+      "calls": {
+        "pairs": 75,
+        "attempted": 225,
+        "completed": 225,
+        "failures": {}
+      },
+      "latencies": {
+        "inviteRoundTripMs": {
+          "count": 225,
+          "min": 1.92,
+          "p50": 27.83,
+          "p95": 43.63,
+          "p99": 46.2,
+          "max": 46.59,
+          "mean": 27.41
+        },
+        "probeRoundTripMs": {
+          "count": 2250,
+          "min": 15.28,
+          "p50": 19.92,
+          "p95": 27.6,
+          "p99": 29.86,
+          "max": 31.18,
+          "mean": 20.04
+        },
+        "hangupToEndedMs": {
+          "count": 225,
+          "min": 8.69,
+          "p50": 20.11,
+          "p95": 25.02,
+          "p99": 25.23,
+          "max": 25.28,
+          "mean": 19.49
+        },
+        "inviteToIncomingMs": {
+          "count": 225,
+          "min": 2.04,
+          "p50": 27.89,
+          "p95": 43.68,
+          "p99": 46.26,
+          "max": 46.63,
+          "mean": 27.48
+        },
+        "oneWayRelayMs": {
+          "count": 900,
+          "min": 2.04,
+          "p50": 24.92,
+          "p95": 46.47,
+          "p99": 47.59,
+          "max": 47.77,
+          "mean": 25.37
+        },
+        "acceptToAcceptedMs": {
+          "count": 225,
+          "min": 23.72,
+          "p50": 35.23,
+          "p95": 47.54,
+          "p99": 47.77,
+          "max": 47.77,
+          "mean": 37.56
+        },
+        "offerRelayMs": {
+          "count": 225,
+          "min": 14.5,
+          "p50": 21.34,
+          "p95": 28.26,
+          "p99": 28.66,
+          "max": 47.44,
+          "mean": 21.44
+        },
+        "answerRelayMs": {
+          "count": 225,
+          "min": 10.61,
+          "p50": 14.59,
+          "p95": 19.2,
+          "p99": 20.04,
+          "max": 20.22,
+          "mean": 14.99
+        }
+      },
+      "serverErrorEvents": 0,
+      "serverErrorTexts": {},
+      "unexpectedCloses": 0,
+      "drainMs": 81.5,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 501,
+        "callsActive": 0,
+        "callsEnded": 501
+      },
+      "serverDuringActivity": {
+        "samples": 15,
+        "avgCpuPercentOneCore": 65.3,
+        "peakCpuPercentOneCore": 118.8,
+        "peakWorkingSetMiB": 191.4,
+        "endWorkingSetMiB": 174,
+        "endPrivateMiB": 152.8
+      },
+      "serverWhileConnectedIdle": {
+        "samples": 14,
+        "avgCpuPercentOneCore": 8.1,
+        "peakCpuPercentOneCore": 69.2,
+        "peakWorkingSetMiB": 174,
+        "endWorkingSetMiB": 86.8,
+        "endPrivateMiB": 57.4
+      },
+      "serverAfterDrain": {
+        "t": 1794443947652,
+        "cpuMs": 6875,
+        "workingSetBytes": 90968064,
+        "privateBytes": 60141568
+      },
+      "durationMs": 7462
+    },
+    {
+      "name": "R1-100",
+      "clients": 100,
+      "sourceAddresses": 25,
+      "connected": 100,
+      "rejectedStatuses": {},
+      "connectFailures": [],
+      "connectMs": {
+        "count": 100,
+        "min": 364.18,
+        "p50": 387.68,
+        "p95": 420.09,
+        "p99": 423.18,
+        "max": 424.13,
+        "mean": 392.25
+      },
+      "presenceConvergenceMs": 563.6,
+      "calls": {
+        "pairs": 50,
+        "attempted": 150,
+        "completed": 150,
+        "failures": {}
+      },
+      "latencies": {
+        "inviteRoundTripMs": {
+          "count": 150,
+          "min": 14.38,
+          "p50": 19.58,
+          "p95": 24.47,
+          "p99": 24.76,
+          "max": 36.67,
+          "mean": 19.8
+        },
+        "probeRoundTripMs": {
+          "count": 1500,
+          "min": 9.85,
+          "p50": 12.35,
+          "p95": 16.29,
+          "p99": 21.07,
+          "max": 21.54,
+          "mean": 13.13
+        },
+        "hangupToEndedMs": {
+          "count": 150,
+          "min": 5.68,
+          "p50": 12.32,
+          "p95": 20.44,
+          "p99": 22.06,
+          "max": 22.23,
+          "mean": 12.89
+        },
+        "inviteToIncomingMs": {
+          "count": 150,
+          "min": 14.46,
+          "p50": 19.67,
+          "p95": 24.61,
+          "p99": 36.5,
+          "max": 36.73,
+          "mean": 19.94
+        },
+        "oneWayRelayMs": {
+          "count": 600,
+          "min": 6.54,
+          "p50": 16.31,
+          "p95": 28.38,
+          "p99": 29.08,
+          "max": 36.73,
+          "mean": 16.45
+        },
+        "acceptToAcceptedMs": {
+          "count": 150,
+          "min": 10.89,
+          "p50": 21.33,
+          "p95": 28.92,
+          "p99": 35.33,
+          "max": 35.58,
+          "mean": 22.53
+        },
+        "offerRelayMs": {
+          "count": 150,
+          "min": 10.12,
+          "p50": 12.35,
+          "p95": 28.78,
+          "p99": 28.94,
+          "max": 28.96,
+          "mean": 13.85
+        },
+        "answerRelayMs": {
+          "count": 150,
+          "min": 6.54,
+          "p50": 9.25,
+          "p95": 12.26,
+          "p99": 12.61,
+          "max": 12.83,
+          "mean": 9.48
+        }
+      },
+      "serverErrorEvents": 0,
+      "serverErrorTexts": {},
+      "unexpectedCloses": 0,
+      "drainMs": 86.8,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 651,
+        "callsActive": 0,
+        "callsEnded": 651
+      },
+      "serverDuringActivity": {
+        "samples": 8,
+        "avgCpuPercentOneCore": 71.5,
+        "peakCpuPercentOneCore": 117.9,
+        "peakWorkingSetMiB": 138.8,
+        "endWorkingSetMiB": 115.3,
+        "endPrivateMiB": 91.5
+      },
+      "serverWhileConnectedIdle": {
+        "samples": 13,
+        "avgCpuPercentOneCore": 3.5,
+        "peakCpuPercentOneCore": 36.8,
+        "peakWorkingSetMiB": 115.4,
+        "endWorkingSetMiB": 115.4,
+        "endPrivateMiB": 91.5
+      },
+      "serverAfterDrain": {
+        "t": 1794443954469,
+        "cpuMs": 8343.75,
+        "workingSetBytes": 81883136,
+        "privateBytes": 48603136
+      },
+      "durationMs": 5762
+    },
+    {
+      "name": "R2-100",
+      "clients": 100,
+      "sourceAddresses": 25,
+      "connected": 100,
+      "rejectedStatuses": {},
+      "connectFailures": [],
+      "connectMs": {
+        "count": 100,
+        "min": 287.47,
+        "p50": 306.42,
+        "p95": 331.92,
+        "p99": 333.73,
+        "max": 334.71,
+        "mean": 309.36
+      },
+      "presenceConvergenceMs": 443.3,
+      "calls": {
+        "pairs": 50,
+        "attempted": 150,
+        "completed": 150,
+        "failures": {}
+      },
+      "latencies": {
+        "inviteRoundTripMs": {
+          "count": 150,
+          "min": 6.15,
+          "p50": 14.27,
+          "p95": 19.83,
+          "p99": 19.92,
+          "max": 19.95,
+          "mean": 13.98
+        },
+        "probeRoundTripMs": {
+          "count": 1500,
+          "min": 6.64,
+          "p50": 11.62,
+          "p95": 14.61,
+          "p99": 14.96,
+          "max": 14.98,
+          "mean": 11.61
+        },
+        "hangupToEndedMs": {
+          "count": 150,
+          "min": 5.95,
+          "p50": 11.03,
+          "p95": 16.58,
+          "p99": 17.09,
+          "max": 17.14,
+          "mean": 12.28
+        },
+        "inviteToIncomingMs": {
+          "count": 150,
+          "min": 6.23,
+          "p50": 14.32,
+          "p95": 19.89,
+          "p99": 19.99,
+          "max": 20.01,
+          "mean": 14.02
+        },
+        "oneWayRelayMs": {
+          "count": 600,
+          "min": 4.57,
+          "p50": 13.03,
+          "p95": 19.64,
+          "p99": 23.16,
+          "max": 23.64,
+          "mean": 13.04
+        },
+        "acceptToAcceptedMs": {
+          "count": 150,
+          "min": 12,
+          "p50": 17.97,
+          "p95": 23.13,
+          "p99": 23.61,
+          "max": 23.64,
+          "mean": 16.94
+        },
+        "offerRelayMs": {
+          "count": 150,
+          "min": 9.21,
+          "p50": 11.52,
+          "p95": 19.58,
+          "p99": 19.71,
+          "max": 19.73,
+          "mean": 12.86
+        },
+        "answerRelayMs": {
+          "count": 150,
+          "min": 4.57,
+          "p50": 8.54,
+          "p95": 10.75,
+          "p99": 11.12,
+          "max": 12.14,
+          "mean": 8.33
+        }
+      },
+      "serverErrorEvents": 0,
+      "serverErrorTexts": {},
+      "unexpectedCloses": 0,
+      "drainMs": 76.5,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 801,
+        "callsActive": 0,
+        "callsEnded": 801
+      },
+      "serverDuringActivity": {
+        "samples": 8,
+        "avgCpuPercentOneCore": 57.1,
+        "peakCpuPercentOneCore": 104.2,
+        "peakWorkingSetMiB": 115.5,
+        "endWorkingSetMiB": 114.5,
+        "endPrivateMiB": 88.3
+      },
+      "serverWhileConnectedIdle": {
+        "samples": 13,
+        "avgCpuPercentOneCore": 3,
+        "peakCpuPercentOneCore": 29.8,
+        "peakWorkingSetMiB": 114.6,
+        "endWorkingSetMiB": 77.6,
+        "endPrivateMiB": 46.2
+      },
+      "serverAfterDrain": {
+        "t": 1794443960793,
+        "cpuMs": 9562.5,
+        "workingSetBytes": 81350656,
+        "privateBytes": 48492544
+      },
+      "durationMs": 5446
+    }
+  ],
+  "boundaries": [
+    {
+      "name": "B1-tope-por-IP",
+      "description": "31 conexiones desde 127.0.0.1 (tope por IP 30)",
+      "attempted": 31,
+      "sourceAddresses": 1,
+      "connected": 30,
+      "rejectedStatuses": {
+        "503": 1
+      },
+      "expectedConnected": 30,
+      "metricsWhileConnected": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 30,
+        "callsStarted": 801,
+        "callsActive": 0,
+        "callsEnded": 801,
+        "connectionsRejected": 1
+      },
+      "drainMs": 17.1,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 801,
+        "callsActive": 0,
+        "callsEnded": 801,
+        "connectionsRejected": 1
+      },
+      "passed": true
+    },
+    {
+      "name": "B2-tope-total",
+      "description": "205 conexiones desde 52 IPs (tope total 200)",
+      "attempted": 205,
+      "sourceAddresses": 52,
+      "connected": 200,
+      "rejectedStatuses": {
+        "503": 5
+      },
+      "expectedConnected": 200,
+      "metricsWhileConnected": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 200,
+        "callsStarted": 801,
+        "callsActive": 0,
+        "callsEnded": 801,
+        "connectionsRejected": 6
+      },
+      "drainMs": 298.9,
+      "metricsAfterDrain": {
+        "loginsSucceeded": 206,
+        "connectionsActive": 0,
+        "callsStarted": 801,
+        "callsActive": 0,
+        "callsEnded": 801,
+        "connectionsRejected": 6
+      },
+      "passed": true
+    }
+  ],
+  "memoryCheck": {
+    "points": [
+      {
+        "label": "Reposo tras arrancar",
+        "heapUsedMiB": 7.52,
+        "heapTotalMiB": 9.05,
+        "workingSetMiB": 65.7,
+        "privateMiB": 32.6
+      },
+      {
+        "label": "Tras crear 206 sesiones",
+        "heapUsedMiB": 9.43,
+        "heapTotalMiB": 11.05,
+        "workingSetMiB": 76.4,
+        "privateMiB": 50.7
+      },
+      {
+        "label": "Tras S1-10 (desconectados)",
+        "heapUsedMiB": 8.82,
+        "heapTotalMiB": 10.3,
+        "workingSetMiB": 68.4,
+        "privateMiB": 36.6
+      },
+      {
+        "label": "Tras S2-25 (desconectados)",
+        "heapUsedMiB": 8.9,
+        "heapTotalMiB": 10.55,
+        "workingSetMiB": 67.6,
+        "privateMiB": 34.6
+      },
+      {
+        "label": "Tras S3-50 (desconectados)",
+        "heapUsedMiB": 8.98,
+        "heapTotalMiB": 10.55,
+        "workingSetMiB": 70,
+        "privateMiB": 37.7
+      },
+      {
+        "label": "Tras S4-100 (desconectados)",
+        "heapUsedMiB": 8.2,
+        "heapTotalMiB": 10.55,
+        "workingSetMiB": 76.5,
+        "privateMiB": 44.8
+      },
+      {
+        "label": "Tras S5-150 (desconectados)",
+        "heapUsedMiB": 8.34,
+        "heapTotalMiB": 11.3,
+        "workingSetMiB": 86.8,
+        "privateMiB": 57.4
+      },
+      {
+        "label": "Tras R1-100 (desconectados)",
+        "heapUsedMiB": 8.38,
+        "heapTotalMiB": 10.8,
+        "workingSetMiB": 78.1,
+        "privateMiB": 46.4
+      },
+      {
+        "label": "Tras R2-100 (desconectados)",
+        "heapUsedMiB": 8.42,
+        "heapTotalMiB": 11.3,
+        "workingSetMiB": 77.6,
+        "privateMiB": 46.2
+      },
+      {
+        "label": "Final tras 15 s de reposo",
+        "heapUsedMiB": 8.32,
+        "heapTotalMiB": 10.55,
+        "workingSetMiB": 67.8,
+        "privateMiB": 37.4
+      }
+    ],
+    "criterion": "con GC forzado, el heap usado final no supera en mas de 10 % al medido tras desconectar la primera etapa (las 206 sesiones ya existen en ese punto y siguen vivas por diseno, TTL 8 h).",
+    "passed": true,
+    "detail": "referencia 8.82 MiB, final 8.32 MiB, limite 9.70 MiB"
+  },
+  "finalMetrics": {
+    "loginsSucceeded": 206,
+    "connectionsActive": 0,
+    "callsStarted": 801,
+    "callsActive": 0,
+    "callsEnded": 801,
+    "connectionsRejected": 6
+  },
+  "serverErrorLogEntries": [],
+  "verdict": {
+    "passed": true,
+    "reasons": []
+  }
+}

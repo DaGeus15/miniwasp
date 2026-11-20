@@ -1,0 +1,32 @@
+# Configuracion de Gitleaks para MiniWasp (se usa con: gitleaks dir --config .gitleaks.toml).
+# Se conservan todas las reglas por defecto y solo se excluyen rutas que no forman parte
+# del codigo versionado.
+title = "MiniWasp"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Archivos locales ignorados por git o generados"
+paths = [
+  # Secretos reales del entorno local; esta en .gitignore y nunca se versiona.
+  '''(^|/)\.env$''',
+  # Certificados autofirmados de desarrollo creados con npm run cert (en .gitignore).
+  '''(^|/)certs/''',
+  # Dependencias de terceros; su riesgo lo cubren OSV-Scanner, Trivy y npm audit.
+  '''(^|/)node_modules/''',
+  # Reportes generados por herramientas, no codigo fuente.
+  '''(^|/)coverage/''',
+  '''(^|/)reports/''',
+  # Copias temporales del proyecto que crea Stryker al ejecutar pruebas de mutacion.
+  '''(^|/)\.stryker-tmp/''',
+  '''(^|/)\.scannerwork/''',
+  '''(^|/)docs/evidence/''',
+]
+
+[[allowlists]]
+description = "Invitaciones de ejemplo en las pruebas: son datos inventados, no secretos (las reales las genera el servidor al azar)"
+condition = "AND"
+paths = ['''(^|/)test/''']
+regexTarget = "line"
+regexes = ['''inviteToken: '[\w-]+'''']

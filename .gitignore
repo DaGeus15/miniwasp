@@ -1,0 +1,13 @@
+# Dependencias y salidas generadas
+node_modules/
+coverage/
+.scannerwork/
+.stryker-tmp/
+reports/
+
+# Secretos y certificados locales: nunca se versionan
+.env
+certs/
+
+# Configuracion local del editor y del asistente
+.claude/

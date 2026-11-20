@@ -1,0 +1,9 @@
+{"time":"2026-11-20T21:52:45.342Z","level":"info","event":"server.started","urls":["https://localhost:56441","https://192.168.1.4:56441","https://172.31.144.1:56441"]}
+{"time":"2026-11-20T21:52:45.408Z","level":"info","event":"room.created","roomId":"5e1cfcbd-ea41-4b33-a453-096c7c564244","visibility":"private"}
+{"time":"2026-11-20T21:52:45.424Z","level":"info","event":"api.login","roomId":"5e1cfcbd-ea41-4b33-a453-096c7c564244","sessionId":"cd79d8b0-ecfb-4552-abf1-e2d6b1fc2c9a","isOwner":false,"visibility":"private"}
+{"time":"2026-11-20T21:52:45.427Z","level":"info","event":"videocall.started","callId":"405a317b-6de2-4123-8b4c-5d6e7acd3efa","roomId":"5e1cfcbd-ea41-4b33-a453-096c7c564244"}
+{"time":"2026-11-20T21:53:25.672Z","level":"info","event":"videocall.joined","callId":"405a317b-6de2-4123-8b4c-5d6e7acd3efa"}
+{"time":"2026-11-20T21:53:25.784Z","level":"info","event":"room.created","roomId":"f259dfa9-cf13-4645-a26b-0d791e790ad8","visibility":"private"}
+{"time":"2026-11-20T21:53:25.785Z","level":"info","event":"api.login","roomId":"f259dfa9-cf13-4645-a26b-0d791e790ad8","sessionId":"a6d1ec83-33e5-4ed4-9b3a-12a85da0445b","isOwner":true,"visibility":"private"}
+{"time":"2026-11-20T21:53:26.034Z","level":"info","event":"videocall.left","callId":"405a317b-6de2-4123-8b4c-5d6e7acd3efa"}
+{"time":"2026-11-20T21:55:40.129Z","level":"info","event":"room.member.removed","roomId":"5e1cfcbd-ea41-4b33-a453-096c7c564244"}

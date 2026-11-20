@@ -1,0 +1,4 @@
+{
+  "description": "Alertas de ZAP aceptadas como falsos positivos confirmados leyendo el codigo. Cada entrada: { pluginId, alertRef (opcional), justification (minimo 40 caracteres con la razon tecnica) }. Debe quedar vacia salvo falsos positivos demostrados.",
+  "alerts": []
+}

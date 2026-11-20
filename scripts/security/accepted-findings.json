@@ -1,0 +1,4 @@
+{
+  "$comment": "Excepciones aprobadas para hallazgos HIGH/CRITICAL. Solo falsos positivos verificados. Cada entrada requiere tool, ruleId, reason y expires (AAAA-MM-DD); file es opcional y restringe la excepcion a un archivo. Una entrada vencida deja de aplicarse.",
+  "findings": []
+}

@@ -1,0 +1,638 @@
+<title>MiniWasp · Caso de estudio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: columna editorial de 1080 px; bandas de tinta para hero y arquitectura; el "pase" perforado como motivo. */
+:root {
+  --stone: #EBEDF0;      /* fondo claro: piedra fría del producto */
+  --paper: #F7F8FA;      /* superficies */
+  --ink: #121417;        /* texto y bandas */
+  --ink-soft: #4A5058;   /* texto secundario */
+  --line: #D3D7DD;
+  --wasp: #FFB224;       /* caléndula: acento único */
+  --wasp-deep: #8A5A00;  /* acento legible sobre claro */
+  --danger: #C42B1C;
+  --ok: #18794E;
+  --band: #121417;       /* bandas oscuras */
+  --band-fg: #EDEFF2;
+  --band-soft: #A3AAB3;
+  --band-line: #2A2F36;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --stone: #0B0D0F; --paper: #15181C; --ink: #E9ECEF; --ink-soft: #A3AAB3; --line: #2A2F36;
+    --wasp: #FFB224; --wasp-deep: #FFC85C; --danger: #FF6B5E; --ok: #4CC38A;
+    --band: #050607; --band-fg: #EDEFF2; --band-soft: #A3AAB3; --band-line: #23272D;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --stone: #0B0D0F; --paper: #15181C; --ink: #E9ECEF; --ink-soft: #A3AAB3; --line: #2A2F36;
+  --wasp: #FFB224; --wasp-deep: #FFC85C; --danger: #FF6B5E; --ok: #4CC38A;
+  --band: #050607; --band-fg: #EDEFF2; --band-soft: #A3AAB3; --band-line: #23272D;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--stone); color: var(--ink);
+  font: 400 1.0625rem/1.65 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration-color: var(--wasp); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--wasp); outline-offset: 3px; border-radius: 4px; }
+img { display: block; max-width: 100%; height: auto; }
+
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.band { background: var(--band); color: var(--band-fg); }
+
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.9rem, 4vw, 2.7rem); font-weight: 800; line-height: 1.08; }
+h3 { font-size: 1.2rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
+p { margin: 0; }
+.eyebrow {
+  font: 600 0.78rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--wasp-deep);
+}
+.band .eyebrow { color: var(--wasp); }
+.lede { font-size: 1.15rem; color: var(--ink-soft); max-width: 62ch; }
+.band .lede { color: var(--band-soft); }
+section { padding-block: clamp(56px, 9vw, 104px); }
+.section-head { display: grid; gap: 14px; margin-bottom: 40px; max-width: 760px; }
+
+/* Hero */
+.hero { padding-block: 40px 0; overflow: hidden; }
+.nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 1.15rem/1 var(--display); }
+.brand svg { width: 30px; height: 30px; }
+.nav-links { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.95rem; color: var(--band-soft); }
+.nav-links a { text-decoration: none; }
+.nav-links a:hover { color: var(--band-fg); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: end; padding-top: 64px; }
+.hero h1 { font-size: clamp(2.8rem, 7.4vw, 5.6rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.035em; }
+.hero h1 em { font-style: normal; color: var(--wasp); }
+.hero-copy { display: grid; gap: 24px; padding-bottom: 56px; min-width: 0; }
+.cta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 12px;
+  font: 600 1rem/1 var(--body); text-decoration: none;
+}
+.btn-primary { background: var(--wasp); color: #121417; }
+.btn-primary:hover { background: #FFC14F; }
+.btn-ghost { border: 1px solid var(--band-line); color: var(--band-fg); }
+.btn-ghost:hover { border-color: var(--band-soft); }
+.url { font: 500 0.85rem/1.4 var(--mono); color: var(--band-soft); word-break: break-all; }
+
+/* Pase perforado (motivo del producto) */
+.ticket {
+  position: relative; background: var(--wasp); color: #121417; border-radius: 18px;
+  padding: 22px 26px; display: grid; grid-template-columns: 1fr auto; gap: 8px 24px;
+  transform: rotate(-3deg); box-shadow: 0 30px 60px -20px rgba(0,0,0,.6); margin: 0 0 -38px 12px;
+  max-width: 100%;
+}
+.ticket::before, .ticket::after {
+  content: ""; position: absolute; right: 108px; width: 24px; height: 24px; border-radius: 50%; background: var(--band);
+}
+.ticket::before { top: -12px; } .ticket::after { bottom: -12px; }
+.ticket-label { font: 600 0.72rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; }
+.ticket-code { font: 600 clamp(1.1rem, 2.6vw, 1.6rem)/1.1 var(--mono); letter-spacing: .04em; }
+.ticket-side {
+  grid-row: 1 / span 3; grid-column: 2; border-left: 2px dashed rgba(18,20,23,.45); padding-left: 22px;
+  writing-mode: vertical-rl; transform: rotate(180deg); font: 600 0.72rem/1 var(--mono); letter-spacing: .2em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center;
+}
+.ticket-note { font-size: 0.85rem; opacity: .8; }
+.hero-shot { min-width: 0; display: grid; }
+.hero-shot img { border-radius: 14px 14px 0 0; border: 1px solid var(--band-line); border-bottom: 0; }
+
+/* Facts strip */
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--band-line); }
+.fact { padding: 22px 20px 26px 0; display: grid; gap: 4px; min-width: 0; }
+.fact + .fact { padding-left: 20px; border-left: 1px solid var(--band-line); }
+.fact b { font: 700 1.6rem/1.1 var(--display); color: var(--band-fg); font-variant-numeric: tabular-nums; }
+.fact span { font-size: 0.9rem; color: var(--band-soft); }
+
+/* Problema / solución */
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 30px; display: grid; gap: 14px; align-content: start; }
+.panel ul { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; color: var(--ink-soft); }
+.panel ul b { color: var(--ink); font-weight: 600; }
+.panel.solution { border-color: var(--wasp); box-shadow: inset 0 0 0 1px var(--wasp); }
+
+/* Funciones */
+.feature { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 40px; align-items: center; padding-block: 36px; border-top: 1px solid var(--line); }
+.feature:first-of-type { border-top: 0; }
+.feature.flip .feature-copy { order: 2; }
+.feature-copy { display: grid; gap: 12px; min-width: 0; }
+.feature-copy p { color: var(--ink-soft); }
+.feature-copy .tag { font: 600 0.75rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--wasp-deep); }
+figure { margin: 0; min-width: 0; }
+.shot { border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 24px 50px -28px rgba(18,20,23,.45); background: var(--paper); }
+figcaption { font-size: 0.85rem; color: var(--ink-soft); margin-top: 10px; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.crop { aspect-ratio: 4 / 5; object-fit: cover; object-position: top; width: 100%; }
+.phones { display: flex; gap: 16px; justify-content: center; }
+.phones img { width: min(46%, 260px); border-radius: 26px; border: 6px solid var(--ink); }
+.note {
+  display: grid; gap: 6px; padding: 20px 22px; border-radius: 14px; border: 1px dashed var(--line); color: var(--ink-soft); font-size: 0.95rem;
+}
+.note b { color: var(--ink); }
+.code12 { font: 600 1.05rem/1 var(--mono); letter-spacing: .06em; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; white-space: nowrap; }
+
+/* Arquitectura */
+.diagram-box { overflow-x: auto; border: 1px solid var(--band-line); border-radius: 18px; padding: 20px; background: rgba(255,255,255,.02); }
+.diagram-box svg { width: 100%; min-width: 760px; height: auto; display: block; }
+.arch-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 32px; }
+.arch-notes div { display: grid; gap: 8px; min-width: 0; }
+.arch-notes p { color: var(--band-soft); font-size: 0.95rem; }
+.arch-notes h3 { color: var(--band-fg); }
+
+/* Seguridad */
+.sec-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.sec { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 24px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.sec p { color: var(--ink-soft); font-size: 0.96rem; }
+.sec code, .mono { font: 500 0.86em/1.4 var(--mono); }
+.sec code { background: var(--stone); padding: 2px 8px; border-radius: 6px; overflow-wrap: anywhere; }
+.layers { counter-reset: layer; display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.layers li { counter-increment: layer; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.layers li::before { content: counter(layer, decimal-leading-zero); font: 600 0.9rem/1.6 var(--mono); color: var(--wasp-deep); }
+.layers b { display: block; }
+.layers span { color: var(--ink-soft); font-size: 0.96rem; }
+.threat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 40px; margin-top: 56px; align-items: start; }
+.stride { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.stride div { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 2px; }
+.stride b { font: 700 1.5rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.stride span { font-size: 0.8rem; color: var(--ink-soft); line-height: 1.3; }
+.risk { margin-top: 14px; padding: 16px 18px; border-radius: 12px; border: 1px solid var(--danger); background: var(--paper); font-size: 0.95rem; color: var(--ink-soft); }
+.risk b { color: var(--danger); }
+
+/* Calidad */
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.metric { border-top: 3px solid var(--ink); padding-top: 16px; display: grid; gap: 6px; align-content: start; }
+.metric b { font: 800 clamp(2rem, 4.4vw, 2.8rem)/1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.metric span { font-weight: 600; }
+.metric small { color: var(--ink-soft); font-size: 0.85rem; line-height: 1.45; }
+.pending { margin-top: 32px; }
+
+/* Stack */
+.stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; }
+.stack dl { margin: 0; display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); border-top: 1px solid var(--line); }
+.stack dt, .stack dd { margin: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.stack dt { font: 600 0.8rem/1.6 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); }
+
+/* Aprendizajes */
+.learn { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 48px; }
+.learn div { display: grid; gap: 8px; }
+.learn p { color: var(--ink-soft); }
+
+footer { padding-block: 64px 48px; }
+.foot { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: end; }
+.links { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--band-line); }
+.links li { border-bottom: 1px solid var(--band-line); }
+.links a { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; text-decoration: none; }
+.links a span:last-child { font: 500 0.82rem/1.6 var(--mono); color: var(--band-soft); overflow-wrap: anywhere; text-align: right; }
+.links a:hover span:first-child { color: var(--wasp); }
+.small { font-size: 0.85rem; color: var(--band-soft); margin-top: 40px; }
+
+@media (max-width: 860px) {
+  .hero-grid, .split, .feature, .threat, .foot, .learn, .stack { grid-template-columns: minmax(0, 1fr); }
+  .feature.flip .feature-copy { order: 0; }
+  .hero-copy { padding-bottom: 8px; }
+  .ticket { margin: 0 6px 24px; }
+  .sec-grid, .metrics, .arch-notes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fact:nth-child(3) { border-left: 0; padding-left: 0; }
+  .fact:nth-child(n+3) { border-top: 1px solid var(--band-line); }
+}
+@media (max-width: 560px) {
+  .sec-grid, .metrics, .arch-notes, .pair { grid-template-columns: minmax(0, 1fr); }
+  .stride { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stack dl { grid-template-columns: 7.5rem minmax(0, 1fr); }
+  .ticket::before, .ticket::after { right: 86px; }
+  .ticket-side { padding-left: 14px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ticket { animation: settle .9s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes settle { from { transform: rotate(-9deg) translateY(10px); } to { transform: rotate(-3deg); } }
+}
+</style>
+
+<header class="band hero">
+  <div class="wrap">
+    <nav class="nav" aria-label="Secciones">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14l-12 7L4 23V9z" fill="#FFB224"/><rect x="10" y="11" width="12" height="8" rx="2" fill="#121417"/><path d="M13 19v3l3-3z" fill="#121417"/></svg>
+        MiniWasp <span style="font:500 0.9rem/1 var(--body);color:var(--band-soft)">/ caso de estudio</span>
+      </div>
+      <div class="nav-links">
+        <a href="#funciones">Funciones</a>
+        <a href="#arquitectura">Arquitectura</a>
+        <a href="#seguridad">Seguridad</a>
+        <a href="#calidad">Calidad</a>
+      </div>
+    </nav>
+
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <h1>Habla en una sala que <em>desaparece.</em></h1>
+        <p class="lede">Mensajería temporal sin cuentas ni número de teléfono: salas privadas por enlace, salas públicas con moderación estricta y videollamadas cifradas de punta a punta. Cuando todos salen, la sala y sus archivos dejan de existir.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://miniwasp.up.railway.app" target="_blank" rel="noopener">Abrir la app en vivo
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3h8v8M13 3 3 13" stroke="currentColor" stroke-width="2" fill="none"/></svg></a>
+          <a class="btn btn-ghost" href="https://github.com/DaGeus15/miniwasp" target="_blank" rel="noopener">Ver el código</a>
+        </div>
+        <p class="url">miniwasp.up.railway.app · Railway</p>
+      </div>
+      <div class="hero-shot">
+        <div class="ticket" aria-hidden="true">
+          <span class="ticket-label">Código de seguridad de la llamada</span>
+          <span class="ticket-code">482 913 027 556</span>
+          <span class="ticket-note">12 dígitos derivados con SHA-256 de las dos huellas DTLS</span>
+          <span class="ticket-side">Pase</span>
+        </div>
+        <img src="shots/03-sala-publica-chat-adjuntos.png" width="2160" height="1350" alt="Sala pública Demo en MiniWasp con mensajes de Ana y Luis, una foto de paisaje y un archivo agenda-demo.txt">
+      </div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><b>0</b><span>cuentas, teléfonos o bases de datos</span></div>
+      <div class="fact"><b>AES-256-GCM</b><span>clave por sala, destruida al cerrarla</span></div>
+      <div class="fact"><b>709</b><span>pruebas automatizadas, todas en verde</span></div>
+      <div class="fact"><b>100 %</b><span>moderación local, sin servicios externos</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">El problema y la solución</p>
+        <h2>Hablar con alguien sin entregarle tu número</h2>
+      </div>
+      <div class="split">
+        <div class="panel">
+          <h3>Lo que pasa hoy</h3>
+          <ul>
+            <li>Los mensajeros populares piden un <b>número de teléfono</b>: compartir un chat es compartir tu identidad.</li>
+            <li>Las conversaciones y los archivos <b>quedan guardados</b> en servidores y copias de seguridad mucho después de que dejan de importar.</li>
+            <li>Los espacios abiertos entre desconocidos se llenan de <b>insultos, spam y contenido ilegal</b> si nadie los modera.</li>
+            <li>La moderación automática suele implicar <b>enviar tus fotos a un tercero</b>.</li>
+          </ul>
+        </div>
+        <div class="panel solution">
+          <h3>Lo que hace MiniWasp</h3>
+          <ul>
+            <li><b>Salas temporales</b> de hasta 20 personas: entras con un enlace de invitación de 128 bits y eliges un nombre.</li>
+            <li>Todo vive <b>en memoria</b>; los adjuntos salen del proceso solo cifrados y se vuelven ilegibles al cerrarse la sala (<i>crypto-shredding</i>).</li>
+            <li><b>Salas públicas</b> listadas en la portada (solo título y ocupación) con un perfil de moderación estricto.</li>
+            <li>Moderación de texto e imágenes <b>dentro del servidor</b>, con un modelo de IA empaquetado en la aplicación.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="funciones" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Funciones</p>
+        <h2>Capturas reales de producción</h2>
+        <p class="lede">Tomadas en la versión publicada con una sala de demostración y personas ficticias (Ana, Luis y Sofi). La foto del chat es un paisaje generado por código.</p>
+      </div>
+
+      <article class="feature">
+        <div class="feature-copy">
+          <span class="tag">Portada</span>
+          <h3>Crear, unirse o elegir una sala pública</h3>
+          <p>Una sala se crea con un clic y se comparte con un ID o un enlace. La lista pública muestra solo el título y cuántas personas hay, nunca sus nombres. Para crear o entrar hay que aceptar las normas de la comunidad (16 años o más).</p>
+        </div>
+        <figure class="pair">
+          <img class="shot crop" src="shots/01-inicio-salas-publicas.png" width="2160" height="1350" alt="Portada oscura de MiniWasp con la sala pública Demo, 1 de 20 personas" style="aspect-ratio:auto">
+          <img class="shot crop" src="shots/02-normas-consentimiento.png" width="2160" height="1350" alt="Casilla de aceptación de las normas de la comunidad marcada" style="aspect-ratio:auto">
+          <figcaption style="grid-column:1/-1">Izquierda: la lista pública. Derecha: el consentimiento de las normas, obligatorio también en la API REST (<span class="mono">acceptedRules: true</span>).</figcaption>
+        </figure>
+      </article>
+
+      <article class="feature flip">
+        <div class="feature-copy">
+          <span class="tag">Chat y adjuntos</span>
+          <h3>Fotos, notas de voz, PDF y texto, cifrados por sala</h3>
+          <p>El navegador vuelve a dibujar cada foto como JPEG de 1 600 px sin metadatos; el servidor la revisa con la IA local y la re-codifica desde los píxeles. Cada persona puede borrar sus mensajes para todos, y quien creó la sala puede borrar cualquiera.</p>
+        </div>
+        <figure>
+          <img class="shot" src="shots/03-sala-publica-chat-adjuntos.png" width="2160" height="1350" alt="Sala pública con una foto moderada y un documento de texto adjunto">
+          <figcaption>En las salas públicas solo se aceptan fotos y texto: lo que se puede revisar por dentro.</figcaption>
+        </figure>
+      </article>
+
+      <article class="feature">
+        <div class="feature-copy">
+          <span class="tag">Moderación</span>
+          <h3>El mensaje no sale si rompe las normas</h3>
+          <p>El texto pasa por un normalizador que deshace leetspeak, separadores, acentos, caracteres invisibles y repeticiones antes de compararlo. En salas públicas también se bloquean groserías e insultos, con un modo lento de 2 segundos.</p>
+        </div>
+        <figure>
+          <img class="shot" src="shots/04-mensaje-bloqueado.png" width="2160" height="1350" alt="Aviso: No se envió: parece contener insultos">
+          <figcaption>Respuesta real del servidor a «eres un idiota» en una sala pública.</figcaption>
+        </figure>
+      </article>
+
+      <article class="feature flip">
+        <div class="feature-copy">
+          <span class="tag">Susurros</span>
+          <h3>De la sala pública a una conversación para dos</h3>
+          <p>Desde una sala pública, dos personas pasan a una sala privada solo para ellas si la invitada acepta. El traslado usa un pase de un solo uso, ligado a la sesión y válido 60 segundos. Quien no quiere recibir susurros lo desactiva, y quien invita solo ve «no disponible».</p>
+        </div>
+        <figure>
+          <img class="shot" src="shots/05-susurro-invitacion-y-personas.png" width="2160" height="1350" alt="Lista de conectados con botones Susurrar e invitación de Ana para hablar en privado con Aceptar y Rechazar">
+          <figcaption>Vista de Luis: la lista de conectados con «Susurrar» y la invitación de Ana.</figcaption>
+        </figure>
+      </article>
+
+      <article class="feature">
+        <div class="feature-copy">
+          <span class="tag">Videollamadas</span>
+          <h3>Uno a uno, de navegador a navegador</h3>
+          <p>El audio y el video viajan cifrados con DTLS-SRTP directamente entre las dos personas; el servidor solo hace la señalización. Al conectar, ambos ven un código de seguridad de 12 dígitos. Si coincide al decirlo en voz alta, nadie sustituyó las huellas para interceptar la llamada.</p>
+          <p><span class="code12">482 913 027 556</span> <span style="font-size:.85rem">(ejemplo)</span></p>
+        </div>
+        <div class="note">
+          <b>Sin captura de la llamada</b>
+          Una captura honesta necesita dos cámaras reales. La llamada está cubierta por 14 escenarios E2E con dos Chrome reales (cámara simulada), todos aprobados; en producción se verificó la señalización por WSS, no una llamada entre dos equipos.
+        </div>
+      </article>
+
+      <article class="feature flip">
+        <div class="feature-copy">
+          <span class="tag">Móvil y transparencia</span>
+          <h3>Pensada para el teléfono, con reglas a la vista</h3>
+          <p>La interfaz se reorganiza en móvil con una franja de invitación y una tira de participantes. Las normas y el aviso de privacidad explican qué se guarda, cuánto tiempo y quién lo ve, con el mismo inventario que la documentación técnica (LOPDP de Ecuador).</p>
+        </div>
+        <figure class="pair">
+          <div class="phones" style="grid-column:1/-1">
+            <img src="shots/06-movil-inicio.png" width="780" height="1688" alt="Portada de MiniWasp en un teléfono">
+            <img src="shots/07-movil-sala.png" width="780" height="1688" alt="Sala pública en un teléfono con la tira de participantes">
+          </div>
+          <img class="shot crop" src="shots/08-normas.png" width="2160" height="3261" alt="Página de normas de la comunidad">
+          <img class="shot crop" src="shots/09-privacidad.png" width="2160" height="3266" alt="Página del aviso de privacidad">
+        </figure>
+      </article>
+    </div>
+  </section>
+
+  <section id="arquitectura" class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Arquitectura</p>
+        <h2>Un proceso Node.js, cuatro fronteras de confianza</h2>
+        <p class="lede">Un único servidor sirve la página, autentica, modera, cifra y hace de señalización WebRTC. Nada de lo que llega del navegador es de confianza, y el proveedor del bucket tampoco.</p>
+      </div>
+      <div class="diagram-box">
+        <svg viewBox="0 0 900 430" role="img" aria-labelledby="arch-title arch-desc">
+          <title id="arch-title">Arquitectura de MiniWasp</title>
+          <desc id="arch-desc">Dos navegadores se conectan por HTTPS y WebSocket seguro al servidor Node.js. El servidor envía las fotos a un grupo de hilos con el modelo nsfwjs y guarda los adjuntos cifrados con AES-256-GCM en un bucket S3. Las videollamadas van directo entre navegadores por WebRTC con DTLS-SRTP.</desc>
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#A3AAB3"/></marker>
+            <marker id="arrw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#FFB224"/></marker>
+          </defs>
+          <g font-family="IBM Plex Sans, Segoe UI, sans-serif">
+            <!-- Navegadores -->
+            <rect x="70" y="40" width="190" height="96" rx="14" fill="#15181C" stroke="#3A4048"/>
+            <text x="90" y="72" fill="#EDEFF2" font-size="16" font-weight="600">Navegador A</text>
+            <text x="90" y="96" fill="#A3AAB3" font-size="12.5">HTML · CSS · JS sin framework</text>
+            <text x="90" y="116" fill="#A3AAB3" font-size="12.5">no confiable</text>
+            <rect x="70" y="294" width="190" height="96" rx="14" fill="#15181C" stroke="#3A4048"/>
+            <text x="90" y="326" fill="#EDEFF2" font-size="16" font-weight="600">Navegador B</text>
+            <text x="90" y="350" fill="#A3AAB3" font-size="12.5">valida cada evento</text>
+            <text x="90" y="370" fill="#A3AAB3" font-size="12.5">no confiable</text>
+
+            <!-- P2P -->
+            <path d="M70 110 C 10 160, 10 270, 70 320" fill="none" stroke="#FFB224" stroke-width="2.5" stroke-dasharray="7 6" marker-start="url(#arrw)" marker-end="url(#arrw)"/>
+            <text x="28" y="205" fill="#FFB224" font-size="12" font-weight="600" transform="rotate(-90 28 215)" text-anchor="middle">WebRTC P2P · DTLS-SRTP</text>
+
+            <!-- Servidor -->
+            <rect x="350" y="70" width="250" height="290" rx="16" fill="#1B1F24" stroke="#FFB224" stroke-width="1.5"/>
+            <text x="370" y="102" fill="#EDEFF2" font-size="16" font-weight="600">Servidor Node.js 22</text>
+            <text x="370" y="122" fill="#A3AAB3" font-size="12">confiable · estado en memoria</text>
+            <g font-size="12.5">
+              <rect x="370" y="138" width="210" height="34" rx="8" fill="#23282E"/>
+              <text x="384" y="160" fill="#EDEFF2">HTTP · API REST /api/v1</text>
+              <rect x="370" y="180" width="210" height="34" rx="8" fill="#23282E"/>
+              <text x="384" y="202" fill="#EDEFF2">WebSocket · chat y señalización</text>
+              <rect x="370" y="222" width="210" height="34" rx="8" fill="#23282E"/>
+              <text x="384" y="244" fill="#EDEFF2">ContentGate · texto y faltas</text>
+              <rect x="370" y="264" width="210" height="34" rx="8" fill="#23282E"/>
+              <text x="384" y="286" fill="#EDEFF2">AttachmentStore · RoomCipher</text>
+              <rect x="370" y="306" width="210" height="34" rx="8" fill="#23282E"/>
+              <text x="384" y="328" fill="#EDEFF2">Sesiones (solo el hash)</text>
+            </g>
+
+            <!-- Flechas navegador-servidor -->
+            <path d="M262 88 C 300 88, 310 155, 348 155" fill="none" stroke="#A3AAB3" stroke-width="1.6" marker-end="url(#arr)"/>
+            <path d="M262 342 C 300 342, 310 197, 348 197" fill="none" stroke="#A3AAB3" stroke-width="1.6" marker-end="url(#arr)"/>
+            <text x="268" y="76" fill="#A3AAB3" font-size="11.5">HTTPS + WSS</text>
+            <text x="268" y="410" fill="#A3AAB3" font-size="11.5">HTTPS + WSS</text>
+
+            <!-- Worker pool -->
+            <rect x="680" y="50" width="200" height="120" rx="14" fill="#15181C" stroke="#3A4048"/>
+            <text x="700" y="80" fill="#EDEFF2" font-size="16" font-weight="600">WorkerPool</text>
+            <text x="700" y="102" fill="#A3AAB3" font-size="12.5">nsfwjs + TensorFlow.js</text>
+            <text x="700" y="120" fill="#A3AAB3" font-size="12.5">backend WASM, worker_threads</text>
+            <text x="700" y="148" fill="#FFB224" font-size="12" font-weight="600">falla cerrado → 503</text>
+            <path d="M582 239 C 630 239, 630 120, 678 120" fill="none" stroke="#A3AAB3" stroke-width="1.6" marker-end="url(#arr)"/>
+            <text x="606" y="196" fill="#A3AAB3" font-size="11.5">fotos</text>
+
+            <!-- Bucket -->
+            <rect x="680" y="260" width="200" height="120" rx="14" fill="#15181C" stroke="#3A4048"/>
+            <text x="700" y="290" fill="#EDEFF2" font-size="16" font-weight="600">Bucket S3</text>
+            <text x="700" y="312" fill="#A3AAB3" font-size="12.5">Railway Buckets</text>
+            <text x="700" y="330" fill="#A3AAB3" font-size="12.5">solo objetos cifrados</text>
+            <text x="700" y="358" fill="#FFB224" font-size="12" font-weight="600">no confiable</text>
+            <path d="M582 281 C 630 281, 630 320, 678 320" fill="none" stroke="#A3AAB3" stroke-width="1.6" marker-end="url(#arr)"/>
+            <text x="604" y="306" fill="#A3AAB3" font-size="11.5" transform="rotate(0)">AES-256-GCM</text>
+          </g>
+        </svg>
+      </div>
+      <div class="arch-notes">
+        <div>
+          <h3>Sin base de datos</h3>
+          <p>Salas, mensajes (últimos 100), sesiones y faltas viven en memoria. Lo único que sale del proceso son los adjuntos, siempre cifrados.</p>
+        </div>
+        <div>
+          <h3>Moderación fuera del hilo principal</h3>
+          <p>El modelo corre en <span class="mono">worker_threads</span> con cola de 100 tareas y 10 s por tarea. Si los hilos no responden, la foto no se publica.</p>
+        </div>
+        <div>
+          <h3>SOLID sin frameworks</h3>
+          <p>87 clases en 139 módulos, organizados por dominio: rooms, chat, calls, attachments, moderation, whispers, security, api.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="seguridad">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Seguridad</p>
+        <h2>Cada control tiene una amenaza y una prueba</h2>
+        <p class="lede">El modelo de amenazas STRIDE enlaza cada riesgo con el control que lo mitiga y la prueba automatizada que lo verifica.</p>
+      </div>
+
+      <div class="sec-grid">
+        <div class="sec">
+          <h3>Crypto-shredding</h3>
+          <p>Cada sala tiene una clave AES-256-GCM aleatoria que solo existe en la memoria del servidor. El contexto <code>sala:adjunto</code> va como dato asociado, así que un objeto no se puede mover a otra sala. Al cerrarse la sala, la clave se sobrescribe con ceros: aunque el proveedor guardara una copia, sería ilegible.</p>
+        </div>
+        <div class="sec">
+          <h3>Cabeceras estrictas</h3>
+          <p>CSP sin <code>unsafe-inline</code>, <code>Cross-Origin-Embedder-Policy: require-corp</code>, COOP, CORP, HSTS y <code>nosniff</code>. Los adjuntos se sirven con <code>default-src 'none'; sandbox</code> y los PDF siempre como descarga.</p>
+        </div>
+        <div class="sec">
+          <h3>Tipo por bytes mágicos</h3>
+          <p>El servidor ignora la extensión y el <code>Content-Type</code>. Solo reconoce JPEG, PDF, WebM, Ogg, MP4/M4A y texto UTF-8 por su contenido; un ejecutable renombrado a <code>.jpg</code> recibe 415.</p>
+        </div>
+        <div class="sec">
+          <h3>Fotos sin EXIF ni GPS</h3>
+          <p>Los metadatos se pierden dos veces: el navegador redibuja la foto en un lienzo y el servidor la re-codifica desde los píxeles, con un límite de 4 megapíxeles y 64 MB contra bombas de descompresión.</p>
+        </div>
+        <div class="sec">
+          <h3>Límites de frecuencia</h3>
+          <p>30 intentos de acceso y 30 subidas por minuto por IP, 3 salas públicas cada 10 minutos, 5 invitaciones a susurrar por minuto, modo lento de 2 s y tope de 2 000 conexiones.</p>
+        </div>
+        <div class="sec">
+          <h3>Sesiones e invitaciones</h3>
+          <p>Cookie <code>HttpOnly; Secure; SameSite=Strict</code> con token de 256 bits del que el servidor solo guarda el hash. Invitaciones de 128 bits que se pueden renovar, y verificación de <code>Origin</code> contra CSRF.</p>
+        </div>
+      </div>
+
+      <div class="threat">
+        <div>
+          <h3 style="margin-bottom:16px">Capas de moderación</h3>
+          <ol class="layers">
+            <li><div><b>Normas aceptadas al entrar</b><span>Edad mínima de 16 años; la API exige <span class="mono">acceptedRules: true</span>.</span></div></li>
+            <li><div><b>Texto normalizado y diccionario</b><span>Mensajes, nombres, títulos, nombres de archivo y archivos .txt. Perfil estricto en salas públicas.</span></div></li>
+            <li><div><b>IA de imágenes local</b><span>nsfwjs empaquetado; ninguna foto sale hacia servicios externos.</span></div></li>
+            <li><div><b>Faltas que escalan</b><span>3 bloqueos en 15 minutos silencian 10 minutos; reincidir expulsa. El contenido sexual con menores expulsa a la primera.</span></div></li>
+            <li><div><b>Reportes de la sala</b><span>Tres personas distintas borran un mensaje (dos en salas públicas).</span></div></li>
+            <li><div><b>Veto en salas públicas</b><span>Quien es expulsado no vuelve: se guarda una huella HMAC de su IP, nunca la IP.</span></div></li>
+          </ol>
+        </div>
+        <div>
+          <h3 style="margin-bottom:16px">Modelo de amenazas</h3>
+          <div class="stride">
+            <div><b>4</b><span>Suplantación</span></div>
+            <div><b>6</b><span>Manipulación</span></div>
+            <div><b>1</b><span>Repudio</span></div>
+            <div><b>6</b><span>Divulgación</span></div>
+            <div><b>6</b><span>Denegación de servicio</span></div>
+            <div><b>4</b><span>Elevación de privilegios</span></div>
+            <div><b>4</b><span>Abuso de moderación</span></div>
+            <div><b>8</b><span>Salas públicas y susurros</span></div>
+          </div>
+          <p style="margin-top:16px;color:var(--ink-soft)">39 amenazas analizadas, cada una con su control, su prueba y su riesgo residual.</p>
+          <p class="risk"><b>Riesgo residual alto, declarado:</b> material de abuso sexual infantil. No hay coincidencia de hashes tipo PhotoDNA, el modelo no estima edades y las notas de voz y los PDF no se analizan por dentro. Por eso las salas públicas solo aceptan fotos y texto.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="calidad" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Calidad</p>
+        <h2>Métricas que se pueden comprobar</h2>
+        <p class="lede">Solo cifras con evidencia en el repositorio, con su fecha.</p>
+      </div>
+      <div class="metrics">
+        <div class="metric"><b>709</b><span>pruebas, 0 fallidas</span><small>165 suites con <span class="mono">node:test</span> y <span class="mono">jsdom</span>: unitarias, de integración con servidor real y de DOM. 20/11/2026.</small></div>
+        <div class="metric"><b>98,75 %</b><span>cobertura de líneas</span><small>8 782 de 8 893 líneas; ramas 98,48 % (2 144 de 2 177). Informe lcov del 20/11/2026.</small></div>
+        <div class="metric"><b>14 / 14</b><span>escenarios E2E</span><small>Dos Chrome reales: llamada completa, micrófono, cámara, permisos negados, reconexión y expulsión. 19/11/2026.</small></div>
+        <div class="metric"><b>0</b><span>alertas ZAP Low o superiores</span><small>Escaneo pasivo de OWASP ZAP contra producción; quedan 2 avisos informativos (token de invitación en la URL y contenido no almacenable). 19/11/2026.</small></div>
+        <div class="metric"><b>0</b><span>vulnerabilidades en dependencias</span><small>OSV-Scanner, Trivy (código e imagen Docker) y <span class="mono">npm audit</span>. Semgrep: 3 avisos medios en el generador de carga. 19/11/2026.</small></div>
+        <div class="metric"><b>100</b><span>clientes simultáneos</span><small>Prueba de carga de señalización: 150 de 150 ciclos de llamada, 0 errores, ida y vuelta p95 de 17 ms en una sola máquina.</small></div>
+      </div>
+      <div class="note pending">
+        <b>Lo que todavía no está medido</b>
+        ESLint limita la complejidad ciclomática y cognitiva a 10 y las funciones a 30 líneas, y el proyecto incluye SonarQube y mutación con StrykerJS. El análisis de SonarQube no se pudo verificar de forma independiente y la última corrida de mutación falló por errores del entorno en Windows, así que no publico esas cifras.
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Tecnologías</p>
+        <h2>Pocas dependencias, todas justificadas</h2>
+      </div>
+      <div class="stack">
+        <dl>
+          <dt>Servidor</dt><dd>Node.js 22, módulo <span class="mono">http</span> nativo, <span class="mono">ws</span></dd>
+          <dt>Moderación</dt><dd><span class="mono">nsfwjs</span>, TensorFlow.js (WASM), <span class="mono">jpeg-js</span></dd>
+          <dt>Almacenamiento</dt><dd><span class="mono">@aws-sdk/client-s3</span> con Railway Buckets</dd>
+          <dt>Cliente</dt><dd>HTML, CSS y JavaScript sin framework; WebRTC del navegador</dd>
+        </dl>
+        <dl>
+          <dt>Pruebas</dt><dd><span class="mono">node:test</span>, <span class="mono">jsdom</span>, Playwright, StrykerJS</dd>
+          <dt>Análisis</dt><dd>ESLint (sonarjs, security), SonarQube, Semgrep</dd>
+          <dt>Seguridad</dt><dd>OWASP ZAP, OSV-Scanner, Trivy, Gitleaks, Checkov, SBOM CycloneDX</dd>
+          <dt>Despliegue</dt><dd>Docker multietapa sin privilegios, Railway, túnel de Cloudflare</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Lo que aprendí</p>
+        <h2>Decisiones que cambiaron el diseño</h2>
+      </div>
+      <div class="learn">
+        <div>
+          <h3>Borrar es más fácil si nunca puedes leer</h3>
+          <p>En lugar de confiar en que el proveedor borre los archivos, cifrar con una clave por sala y destruirla convierte cualquier copia olvidada en ruido. El borrado pasa a depender de algo que controlo.</p>
+        </div>
+        <div>
+          <h3>Fallar cerrado es una decisión de producto</h3>
+          <p>Si la IA no puede revisar una foto, la foto no se publica. Eso molesta a quien reintenta, pero la alternativa es que saturar los hilos sirva para colar contenido sin revisar.</p>
+        </div>
+        <div>
+          <h3>El modelo de amenazas guía las pruebas</h3>
+          <p>Escribir cada amenaza con su control y su prueba dejó a la vista los huecos reales: los PDF y las notas de voz no se pueden revisar por dentro, así que las salas públicas no los aceptan.</p>
+        </div>
+        <div>
+          <h3>P2P tiene límites honestos</h3>
+          <p>Sin servidor TURN, algunas redes bloquean la llamada, y una videollamada de 20 personas necesitaría un SFU. Documentar esas limitaciones fue parte del trabajo, igual que no publicar métricas que no pude verificar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="band">
+  <div class="wrap">
+    <div class="foot">
+      <div style="display:grid;gap:16px">
+        <p class="eyebrow">Pruébala</p>
+        <h2>Crea una sala, comparte el enlace y ciérrala al salir.</h2>
+      </div>
+      <ul class="links">
+        <li><a href="https://miniwasp.up.railway.app" target="_blank" rel="noopener"><span>App en vivo</span><span>miniwasp.up.railway.app</span></a></li>
+        <li><a href="https://github.com/DaGeus15/miniwasp" target="_blank" rel="noopener"><span>Código fuente</span><span>github.com/DaGeus15/miniwasp</span></a></li>
+        <li><a href="https://miniwasp.up.railway.app/rules.html" target="_blank" rel="noopener"><span>Normas de la comunidad</span><span>/rules.html</span></a></li>
+        <li><a href="https://miniwasp.up.railway.app/privacy.html" target="_blank" rel="noopener"><span>Aviso de privacidad</span><span>/privacy.html</span></a></li>
+      </ul>
+    </div>
+    <p class="small">Proyecto de la asignatura Seguridad de Software, 8.º semestre. Desplegado en Railway (plan gratuito): la primera carga puede tardar unos segundos mientras el servidor despierta.</p>
+  </div>
+</footer>
