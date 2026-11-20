@@ -1,4 +1,26 @@
 {
-  "description": "Alertas de ZAP aceptadas como falsos positivos confirmados leyendo el codigo. Cada entrada: { pluginId, alertRef (opcional), justification (minimo 40 caracteres con la razon tecnica) }. Debe quedar vacia salvo falsos positivos demostrados.",
-  "alerts": []
+  "description": "Alertas de ZAP aceptadas como falsos positivos confirmados leyendo el codigo. Cada entrada: { pluginId, alertRef (opcional), paths (opcional: rutas exactas donde se acepta), justification (minimo 40 caracteres con la razon tecnica) }. Debe quedar vacia salvo falsos positivos demostrados.",
+  "alerts": [
+    {
+      "pluginId": "6",
+      "paths": [
+        "/api/v1/users"
+      ],
+      "justification": "Path Traversal: /api/v1/users solo filtra nombres en memoria (users-endpoint.js) y nunca toca el sistema de archivos. ZAP compara q=users con un valor al azar de 38 caracteres; este supera el maximo de 30 y responde 400 INVALID_QUERY, por eso las respuestas difieren."
+    },
+    {
+      "pluginId": "43",
+      "paths": [
+        "/api/v1/users"
+      ],
+      "justification": "Source Code Disclosure - File Inclusion: misma causa que la regla 6. La busqueda no incluye archivos; la diferencia entre q=users (200) y el valor al azar (400 por superar 30 caracteres) es la validacion de longitud, no contenido de un archivo."
+    },
+    {
+      "pluginId": "90027",
+      "paths": [
+        "/"
+      ],
+      "justification": "Cookie Slack Detector en la portada: / es un HTML estatico publico identico con o sin sesion (static-asset-handler.js). La sesion se valida en /session, en el WebSocket y en las rutas protegidas, que si responden 401 sin la cookie."
+    }
+  ]
 }

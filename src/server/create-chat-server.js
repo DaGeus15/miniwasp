@@ -7,7 +7,7 @@ import { ChatServer } from './chat-server.js';
 import { createHttpListener } from './http/create-http-listener.js';
 import { HttpResponder } from './http/http-responder.js';
 import { RoomSessionIssuer } from './http/room-session-issuer.js';
-import { createSecurityHeaders } from './http/security-headers.js';
+import { createHandshakeHeaders, createSecurityHeaders } from './http/security-headers.js';
 import { MessageRouter } from './messaging/message-router.js';
 import { RoomMessenger } from './messaging/room-messenger.js';
 import { createCallRoutes, createRoomRoutes, createWhisperRoutes } from './messaging/routes.js';
@@ -26,6 +26,11 @@ import { TransferTokens } from './rooms/transfer-tokens.js';
 import { createAddressReader } from './security/client-address.js';
 import { withDefaults } from './server-settings.js';
 import { WhisperCoordinator } from './whispers/whisper-coordinator.js';
+
+// Confiar en un proxy implica que este termina HTTPS delante de la app.
+function isServedOverHttps({ tls, trustedProxyHeader }) {
+  return Boolean(tls) || Boolean(trustedProxyHeader);
+}
 
 // Debe superar MAX_SDP_LENGTH: una oferta WebRTC es mucho mas grande que un mensaje de chat.
 const MAX_PAYLOAD_BYTES = 32768;
@@ -96,9 +101,8 @@ function createContext(settings) {
     rooms: createRooms(settings, { peers, attachments, publicRooms }),
     readAddress: createAddressReader(settings),
     referenceClient: createClientReferencer(),
-    // Confiar en un proxy implica que este termina HTTPS delante de la app.
     responder: new HttpResponder(
-      createSecurityHeaders({ isHttps: Boolean(settings.tls) || Boolean(settings.trustedProxyHeader) }),
+      createSecurityHeaders({ isHttps: isServedOverHttps(settings) }),
     ),
     onSessionRevoked: (session) => forgetSession(context, session),
   };
@@ -131,6 +135,8 @@ export function createChatServer(options) {
     maxPayload: MAX_PAYLOAD_BYTES,
     verifyClient: createHandshakeVerifier(context),
   });
+  const handshakeHeaders = createHandshakeHeaders({ isHttps: isServedOverHttps(context) });
+  sockets.on('headers', (headers) => headers.push(...handshakeHeaders));
   const heartbeat = new ConnectionHeartbeat(sockets.clients, {
     intervalMs: context.heartbeatIntervalMs,
     onBeat() {

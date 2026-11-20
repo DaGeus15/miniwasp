@@ -12,7 +12,7 @@ import { Room } from '../../src/server/rooms/room.js';
 import { ConnectionGuard } from '../../src/server/security/connection-guard.js';
 import { createRateLimiter } from '../../src/server/security/rate-limiter.js';
 import { ClientEvent, ServerEvent } from '../../src/shared/events.js';
-import { createRoomCookie, createTestServer } from '../support/test-server.js';
+import { createRoomCookie, createTestServer, startRoomServer } from '../support/test-server.js';
 import {
   expectRejection,
   expectSilence,
@@ -341,6 +341,18 @@ describe('direccion del cliente detras de Cloudflare', () => {
     assert.match(response.headers.get('strict-transport-security'), /max-age=31536000/);
 
     await stopServer(server);
+  });
+
+  it('la respuesta que abre el WebSocket tambien lleva HSTS', async () => {
+    const room = await startRoomServer({ trustedProxyHeader: 'cf-connecting-ip' });
+    const socket = new WebSocket(room.wsUrl, { headers: { Cookie: room.ownerCookie, Origin: room.httpUrl } });
+    const [response] = await once(socket, 'upgrade');
+
+    assert.match(response.headers['strict-transport-security'], /max-age=31536000/);
+    assert.equal(response.headers['x-content-type-options'], 'nosniff');
+
+    socket.terminate();
+    await stopServer(room.server);
   });
 });
 

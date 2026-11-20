@@ -16,10 +16,23 @@ export function loadAcceptedAlerts(file) {
   return alerts;
 }
 
-// Una entrada aceptada se identifica por pluginId y, opcionalmente, alertRef.
+function pathnameOf(uri) {
+  return URL.canParse(uri) ? new URL(uri).pathname : uri;
+}
+
+// Si la entrada nombra rutas, solo se acepta cuando todas las instancias ocurren en esas rutas
+// exactas: un falso positivo aceptado en una ruta nunca oculta la misma alerta en otra.
+function occursOnlyIn(alert, paths) {
+  return alert.instances.length > 0 && alert.instances.every((instance) => paths.includes(pathnameOf(instance.uri)));
+}
+
+// Una entrada aceptada se identifica por pluginId y, opcionalmente, alertRef y rutas.
 function isAccepted(alert, accepted) {
   return accepted.some(
-    (entry) => entry.pluginId === alert.pluginId && (!entry.alertRef || entry.alertRef === alert.alertRef),
+    (entry) =>
+      entry.pluginId === alert.pluginId &&
+      (!entry.alertRef || entry.alertRef === alert.alertRef) &&
+      (!entry.paths || occursOnlyIn(alert, entry.paths)),
   );
 }
 

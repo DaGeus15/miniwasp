@@ -12,7 +12,7 @@
     "test": "node --test --test-timeout=15000 \"test/**/*.test.js\"",
     "precoverage": "node -e \"fs.mkdirSync('coverage',{recursive:true})\"",
     "coverage": "node --test --test-timeout=15000 --experimental-test-coverage --test-coverage-include=src/** --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \"test/**/*.test.js\"",
-    "postcoverage": "node -e \"const f='coverage/lcov.info';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replaceAll('\\\\','/'))\"",
+    "postcoverage": "node scripts/coverage/normalize-lcov.mjs",
     "e2e": "node scripts/e2e/run-e2e.mjs",
     "load": "node scripts/load/run-signaling-load.mjs",
     "scan:zap": "node scripts/zap/run-zap-scan.mjs",

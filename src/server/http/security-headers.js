@@ -28,3 +28,10 @@ export function createSecurityHeaders({ isHttps }) {
     ? { ...BASE_HEADERS, 'Strict-Transport-Security': STRICT_TRANSPORT_SECURITY }
     : { ...BASE_HEADERS };
 }
+
+// Cabeceras que tambien lleva la respuesta 101 que abre el WebSocket: esa respuesta no pasa por
+// el HttpResponder, pero el navegador igual debe recibir HSTS en ella.
+export function createHandshakeHeaders({ isHttps }) {
+  const lines = ['X-Content-Type-Options: nosniff'];
+  return isHttps ? [...lines, `Strict-Transport-Security: ${STRICT_TRANSPORT_SECURITY}`] : lines;
+}
