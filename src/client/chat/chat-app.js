@@ -137,7 +137,16 @@ function bindPublicRooms(document, client, access) {
   return refresh;
 }
 
-function createAccess({ document, request, connection, location, getStorage }) {
+// Lee la invitacion del enlace una sola vez y la borra de la barra de direcciones.
+function inviteTakerFor(location) {
+  return () => {
+    const inviteToken = readInviteFromHash(location.readHash());
+    location.clearHash();
+    return inviteToken;
+  };
+}
+
+function createAccess({ document, request, connection, location, getStorage, onLeave }) {
   const homeView = new HomeView(document);
   const client = new RoomClient(request);
   let refreshPublicRooms = async () => {};
@@ -149,18 +158,16 @@ function createAccess({ document, request, connection, location, getStorage }) {
     onEnter: () => connection.open(),
     onExit() {
       connection.stop();
+      onLeave();
       void refreshPublicRooms();
     },
     // Mudarse de sala (un susurro) reabre la conexion con la nueva sesion.
     onRoomChange() {
+      onLeave();
       connection.stop();
       connection.open();
     },
-    takeInviteFromLink() {
-      const inviteToken = readInviteFromHash(location.readHash());
-      location.clearHash();
-      return inviteToken;
-    },
+    takeInviteFromLink: inviteTakerFor(location),
   });
   homeView.onCreate(() => access.create());
   homeView.onJoin((input) => access.join(input));
@@ -168,8 +175,8 @@ function createAccess({ document, request, connection, location, getStorage }) {
   return { access, refreshPublicRooms };
 }
 
-function createFeatures({ document, view, notices, send, copyText, origin, media, whispers }) {
-  const calls = createCallFeature({ document, send, notices, ...media });
+function createFeatures({ document, view, notices, send, request, schedule, copyText, origin, media, whispers }) {
+  const calls = createCallFeature({ document, send, notices, request, schedule, ...media });
   const room = createRoomFeature({
     document,
     send,
@@ -184,7 +191,7 @@ function createFeatures({ document, view, notices, send, copyText, origin, media
   return { calls, room };
 }
 
-function createConnection({ location, createSocket, schedule, view, eventHandlers, onReconnecting }) {
+function createConnection({ location, createSocket, schedule, view, eventHandlers, onReconnecting, onOnline }) {
   return new ServerConnection({
     url: socketUrl(location),
     createSocket,
@@ -194,6 +201,8 @@ function createConnection({ location, createSocket, schedule, view, eventHandler
       view.showStatus(textFor(statusKey));
       if (statusKey === 'reconnecting') {
         onReconnecting();
+      } else {
+        onOnline();
       }
     },
   });
@@ -218,6 +227,19 @@ function createRoomFeatures(context) {
   return { attachments, calls, room, eventHandlers };
 }
 
+// Que hace cada funcion de la sala cuando el chat se corta y cuando vuelve.
+function connectionReactions(features, getAccess) {
+  return {
+    onReconnecting() {
+      features.calls.handleConnectionLost();
+      features.room.handleConnectionLost();
+      // No se espera: la reconexion sigue en paralelo y verifySession nunca rechaza.
+      void getAccess().verifySession();
+    },
+    onOnline: () => features.calls.handleConnectionRestored(),
+  };
+}
+
 // Recibe sus dependencias del navegador como parametros para poder probarlo sin uno.
 export async function startChat({ document, location, createSocket, schedule, getStorage, request, copyText, ...media }) {
   const view = createChatView(document);
@@ -227,20 +249,10 @@ export async function startChat({ document, location, createSocket, schedule, ge
   const browser = { document, getStorage, request, schedule, copyText, location, media };
   const features = createRoomFeatures({ ...browser, view, notices, send, getAccess: () => access });
   const { eventHandlers } = features;
-  const connection = createConnection({
-    location,
-    createSocket,
-    schedule,
-    view,
-    eventHandlers,
-    onReconnecting() {
-      features.calls.handleConnectionLost();
-      features.room.handleConnectionLost();
-      // No se espera: la reconexion sigue en paralelo y verifySession nunca rechaza.
-      void access.verifySession();
-    },
-  });
-  const { access, refreshPublicRooms } = createAccess({ document, request, connection, location, getStorage });
+  const reactions = connectionReactions(features, () => access);
+  const connection = createConnection({ location, createSocket, schedule, view, eventHandlers, ...reactions });
+  const onLeave = () => features.calls.handleRoomLeft();
+  const { access, refreshPublicRooms } = createAccess({ ...browser, connection, onLeave });
 
   bindComposer({ view, connection, names }, features.attachments);
   bindMessageActions({ view, send, notices });

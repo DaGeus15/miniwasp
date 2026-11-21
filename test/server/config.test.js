@@ -13,6 +13,7 @@ describe('loadConfig', () => {
       tls: null,
       iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
       trustedProxyHeader: null,
+      turnKey: null,
       objectStorage: null,
     });
   });
@@ -136,5 +137,15 @@ describe('loadConfig: bucket y capacidad', () => {
     for (const value of ['0', '-3', '2.5', 'muchas']) {
       assert.throws(() => loadConfig({ MAX_ROOMS: value }), /MAX_ROOMS/);
     }
+  });
+
+  it('lee la clave TURN completa y rechaza una a medias o con un identificador raro', () => {
+    assert.deepEqual(loadConfig({ TURN_KEY_ID: 'clave-1', TURN_KEY_API_TOKEN: 'secreto' }).turnKey, {
+      keyId: 'clave-1',
+      apiToken: 'secreto',
+    });
+    assert.throws(() => loadConfig({ TURN_KEY_ID: 'clave-1' }), /juntas/);
+    assert.throws(() => loadConfig({ TURN_KEY_API_TOKEN: 'secreto' }), /juntas/);
+    assert.throws(() => loadConfig({ TURN_KEY_ID: '../otra', TURN_KEY_API_TOKEN: 'secreto' }), /TURN_KEY_ID/);
   });
 });

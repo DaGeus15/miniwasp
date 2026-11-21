@@ -48,6 +48,15 @@ export class PeerLink {
     this.#enqueue(() => this.#signalHandlers.get(signal.kind)(signal));
   }
 
+  // Credenciales TURN nuevas para la misma llamada, antes de que venzan las anteriores.
+  updateIceServers(iceServers) {
+    try {
+      this.#connection.setConfiguration({ ...this.#connection.getConfiguration(), iceServers });
+    } catch {
+      // Si el navegador no acepta el cambio, la llamada sigue con las credenciales que tiene.
+    }
+  }
+
   close() {
     this.#isClosed = true;
     this.#connection.close();

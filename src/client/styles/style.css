@@ -1366,6 +1366,38 @@ input:focus-visible {
   transform: scaleX(-1);
 }
 
+/* Se corto el chat durante la llamada: el video sigue y un aviso muestra que reconecta. */
+.call-reconnecting {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 16px 8px 12px;
+  border: 1px solid rgb(255 178 36 / 40%);
+  border-radius: var(--radius-pill);
+  background: rgb(11 12 14 / 78%);
+  color: var(--call-text);
+  font-size: var(--text-md);
+  font-weight: 600;
+  transform: translateX(-50%);
+  backdrop-filter: blur(6px);
+}
+
+.call-reconnecting[hidden] {
+  display: none;
+}
+
+.call-spinner {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border: 2px solid rgb(255 178 36 / 25%);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+}
+
 .call-controls {
   display: flex;
   justify-content: center;
@@ -1652,6 +1684,10 @@ input:focus-visible {
   .call-placeholder-mark {
     grid-area: 1 / 1;
   }
+
+  .call-spinner {
+    animation: spin 900ms linear infinite;
+  }
 }
 
 @keyframes message-in {
@@ -1665,6 +1701,12 @@ input:focus-visible {
   from {
     opacity: 0;
     transform: translateY(16px) rotate(-11deg);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

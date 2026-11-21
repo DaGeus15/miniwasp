@@ -1,6 +1,6 @@
 # Evidencia E2E de videollamadas MiniWasp
 
-Generado por `npm run e2e` (scripts/e2e/run-e2e.mjs) el 2026-11-19T00:07:55.778Z.
+Generado por `npm run e2e` (scripts/e2e/run-e2e.mjs) el 2026-11-21T04:20:06.004Z.
 
 ## Entorno
 
@@ -12,9 +12,9 @@ Generado por `npm run e2e` (scripts/e2e/run-e2e.mjs) el 2026-11-19T00:07:55.778Z
 | logicalCores | 8 |
 | totalMemoryGiB | 15.8 |
 | nodeVersion | v24.11.0 |
-| date | 2026-11-19T00:07:55.778Z |
-| chromeVersion | Chrome 157.0.8103.79 (headless) |
-| appUrl | https://localhost:<puerto libre> (59015 en esta corrida) |
+| date | 2026-11-21T04:20:06.004Z |
+| chromeVersion | Chrome 158.0.8127.36 (headless) |
+| appUrl | https://localhost:<puerto libre> (60281 en esta corrida) |
 
 ## Como reproducir
 
@@ -23,24 +23,25 @@ Generado por `npm run e2e` (scripts/e2e/run-e2e.mjs) el 2026-11-19T00:07:55.778Z
 
 ## Resumen
 
-Total 14, PASS 14, FAIL 0.
+Total 15, PASS 15, FAIL 0.
 
 | ID | Tipo | Escenario | Resultado | Metricas clave | Duracion (ms) |
 |---|---|---|---|---|---|
-| E2E-01 | Security | Unirse con una invitacion inexistente o mal formada se rechaza | **PASS** |  | 748 |
-| E2E-02 | Happy | Ana crea una sala y Luis entra con el enlace copiado | **PASS** |  | 1490 |
-| E2E-03 | Happy | Videollamada completa A -> B con medicion | **PASS** | setup 5446 ms; RTT 1 ms | 12499 |
-| E2E-04 | Happy | Silenciar y reactivar el microfono durante la llamada | **PASS** |  | 1658 |
-| E2E-05 | Happy | Apagar y encender la camara durante la llamada | **PASS** |  | 3158 |
-| E2E-06 | Happy | Colgar libera la camara, el microfono y la conexion en ambos lados | **PASS** |  | 132 |
-| E2E-07 | Sad | Permiso de camara negado: aviso y ninguna invitacion enviada | **PASS** |  | 4532 |
-| E2E-08 | Sad | Rechazar una llamada entrante | **PASS** |  | 303 |
-| E2E-09 | Sad | La persona que llama cancela mientras suena | **PASS** |  | 254 |
-| E2E-11 | Concurrency | Ambos cuelgan al mismo tiempo | **PASS** | desfase de clics 0 ms | 1068 |
-| E2E-13 | Security | Renovar la invitacion invalida el enlace anterior | **PASS** |  | 4144 |
-| E2E-14 | Security | Sacar a una persona: no puede volver con el enlace viejo, si con el nuevo | **PASS** |  | 1840 |
-| E2E-10 | Recovery | Reinicio del servidor de senalizacion sin llamada activa | **PASS** | caida 863 ms; inicio tras reinicio 1185 ms | 3390 |
-| E2E-12 | Security | Cerrar sesion durante la llamada termina la llamada del otro participante | **PASS** |  | 4093 |
+| E2E-01 | Security | Unirse con una invitacion inexistente o mal formada se rechaza | **PASS** |  | 225 |
+| E2E-02 | Happy | Ana crea una sala y Luis entra con el enlace copiado | **PASS** |  | 1242 |
+| E2E-03 | Happy | Videollamada completa A -> B con medicion | **PASS** | setup 3845 ms; RTT 0 ms | 10774 |
+| E2E-04 | Happy | Silenciar y reactivar el microfono durante la llamada | **PASS** |  | 1634 |
+| E2E-05 | Happy | Apagar y encender la camara durante la llamada | **PASS** |  | 3139 |
+| E2E-06 | Happy | Colgar libera la camara, el microfono y la conexion en ambos lados | **PASS** |  | 93 |
+| E2E-07 | Sad | Permiso de camara negado: aviso y ninguna invitacion enviada | **PASS** |  | 4882 |
+| E2E-08 | Sad | Rechazar una llamada entrante | **PASS** |  | 176 |
+| E2E-09 | Sad | La persona que llama cancela mientras suena | **PASS** |  | 175 |
+| E2E-11 | Concurrency | Ambos cuelgan al mismo tiempo | **PASS** | desfase de clics 0 ms | 688 |
+| E2E-15 | Recovery | Corte breve del chat durante la llamada: aviso de reconexion y la llamada sigue | **PASS** |  | 24214 |
+| E2E-13 | Security | Renovar la invitacion invalida el enlace anterior | **PASS** |  | 3837 |
+| E2E-14 | Security | Sacar a una persona: no puede volver con el enlace viejo, si con el nuevo | **PASS** |  | 1028 |
+| E2E-10 | Recovery | Reinicio del servidor de senalizacion sin llamada activa | **PASS** | caida 565 ms; inicio tras reinicio 1453 ms | 2943 |
+| E2E-12 | Security | Cerrar sesion durante la llamada termina la llamada del otro participante | **PASS** |  | 2221 |
 
 ## Detalle por escenario
 
@@ -60,9 +61,8 @@ Total 14, PASS 14, FAIL 0.
 - [x] POST /rooms/join responde 404
 - [x] El chat permanece oculto
 
-- Errores de consola esperados: 2
+- Errores de consola esperados: 1
   - ana (console:pestana-1): `Failed to load resource: the server responded with a status of 404 (Not Found)`
-  - luis (console:pestana-1): `Failed to load resource: the server responded with a status of 401 (Unauthorized)`
 - Errores de consola NO esperados: 0
 
 **Metricas**
@@ -110,15 +110,19 @@ Total 14, PASS 14, FAIL 0.
     "ana": {
       "status": 200,
       "body": {
-        "inviteToken": "ZMIzEhRoqMrmD8E-d4Nzkg",
-        "isOwner": true
+        "inviteToken": "l5ZuFg1SmYH-Vwu3XFRTNw",
+        "isOwner": true,
+        "visibility": "private",
+        "title": null
       }
     },
     "luis": {
       "status": 200,
       "body": {
-        "inviteToken": "ZMIzEhRoqMrmD8E-d4Nzkg",
-        "isOwner": false
+        "inviteToken": "l5ZuFg1SmYH-Vwu3XFRTNw",
+        "isOwner": false,
+        "visibility": "private",
+        "title": null
       }
     }
   }
@@ -143,7 +147,7 @@ Total 14, PASS 14, FAIL 0.
 
 **Esperado:** Ambos llegan a "En llamada", ambos ven el mismo "Código de seguridad: NNN NNN NNN NNN", el video remoto avanza en los dos sentidos y getStats() reporta un par de candidatos seleccionado con RTT, jitter y perdida.
 
-**Observado:** Codigo de seguridad Ana "437 047 558 786" / Luis "437 047 558 786". Establecimiento 5446 ms del clic a "En llamada" (4925 ms sin contar la demora en contestar). Video remoto Ana 320x180, Luis 320x180; ambos avanzan. RTT 1/1 ms, jitter video 2/1 ms, perdidos video 0/0 (Ana/Luis).
+**Observado:** Codigo de seguridad Ana "598 129 599 438" / Luis "598 129 599 438". Establecimiento 3845 ms del clic a "En llamada" (3384 ms sin contar la demora en contestar). Video remoto Ana 320x180, Luis 320x180; ambos avanzan. RTT 0/0 ms, jitter video 1/1 ms, perdidos video 0/0 (Ana/Luis).
 
 **Verificaciones**
 
@@ -163,49 +167,30 @@ Total 14, PASS 14, FAIL 0.
 ```json
 {
   "timeline": {
-    "callSetupMs": 5446,
-    "calleeAnswerDelayMs": 521,
-    "callSetupExcludingAnswerDelayMs": 4925,
-    "callerMediaAcquisitionMs": 1044,
-    "inviteToRingingRoundTripMs": 10,
-    "inviteToIncomingMs": 6,
-    "calleeMediaAcquisitionMs": 3344,
-    "acceptToAcceptedMs": 2,
-    "acceptedToOfferSentMs": 70,
-    "offerToAnswerMs": 380,
-    "answerToCallerActiveMs": 59,
-    "callerActiveToCalleeActiveMs": -24,
-    "offerSdpLength": 5926,
-    "answerSdpLength": 5626
+    "callSetupMs": 3845,
+    "calleeAnswerDelayMs": 461,
+    "callSetupExcludingAnswerDelayMs": 3384,
+    "callerMediaAcquisitionMs": 372,
+    "inviteToRingingRoundTripMs": 2,
+    "inviteToIncomingMs": 2,
+    "calleeMediaAcquisitionMs": 2734,
+    "acceptToAcceptedMs": 1,
+    "acceptedToOfferSentMs": 22,
+    "offerToAnswerMs": 213,
+    "answerToCallerActiveMs": 24,
+    "callerActiveToCalleeActiveMs": -13,
+    "offerSdpLength": 6176,
+    "answerSdpLength": 5880
   },
   "securityCodes": {
-    "ana": "Código de seguridad: 437 047 558 786. Compruébalo con la otra persona.",
-    "luis": "Código de seguridad: 437 047 558 786. Compruébalo con la otra persona."
+    "ana": "Código de seguridad: 598 129 599 438. Compruébalo con la otra persona.",
+    "luis": "Código de seguridad: 598 129 599 438. Compruébalo con la otra persona."
   },
   "remoteVideoAna": {
     "before": {
       "width": 320,
       "height": 180,
-      "currentTime": 0.069245,
-      "readyState": 4,
-      "hasStream": true,
-      "totalVideoFrames": 3
-    },
-    "after": {
-      "width": 320,
-      "height": 180,
-      "currentTime": 1.590537,
-      "readyState": 4,
-      "hasStream": true,
-      "totalVideoFrames": 33
-    },
-    "isAdvancing": true
-  },
-  "remoteVideoLuis": {
-    "before": {
-      "width": 320,
-      "height": 180,
-      "currentTime": 0.051739,
+      "currentTime": 0.048166,
       "readyState": 4,
       "hasStream": true,
       "totalVideoFrames": 1
@@ -213,10 +198,29 @@ Total 14, PASS 14, FAIL 0.
     "after": {
       "width": 320,
       "height": 180,
-      "currentTime": 1.572608,
+      "currentTime": 1.558032,
       "readyState": 4,
       "hasStream": true,
       "totalVideoFrames": 32
+    },
+    "isAdvancing": true
+  },
+  "remoteVideoLuis": {
+    "before": {
+      "width": 320,
+      "height": 180,
+      "currentTime": 0.037079,
+      "readyState": 4,
+      "hasStream": true,
+      "totalVideoFrames": 1
+    },
+    "after": {
+      "width": 320,
+      "height": 180,
+      "currentTime": 1.546945,
+      "readyState": 4,
+      "hasStream": true,
+      "totalVideoFrames": 31
     },
     "isAdvancing": true
   },
@@ -224,8 +228,8 @@ Total 14, PASS 14, FAIL 0.
     "connectionState": "connected",
     "selectedPair": {
       "state": "succeeded",
-      "currentRoundTripTimeMs": 1,
-      "totalRoundTripTimeMs": 8,
+      "currentRoundTripTimeMs": 0,
+      "totalRoundTripTimeMs": 4,
       "responsesReceived": 6,
       "local": {
         "candidateType": "host",
@@ -236,29 +240,29 @@ Total 14, PASS 14, FAIL 0.
         "protocol": "udp"
       }
     },
-    "currentRoundTripTimeMs": 1,
+    "currentRoundTripTimeMs": 0,
     "audioJitterMs": 1,
-    "videoJitterMs": 2,
+    "videoJitterMs": 1,
     "audioPacketsLost": 0,
     "videoPacketsLost": 0,
-    "audioPacketsReceived": 345,
-    "videoPacketsReceived": 176,
-    "videoFramesDecoded": 135,
+    "audioPacketsReceived": 341,
+    "videoPacketsReceived": 174,
+    "videoFramesDecoded": 133,
     "videoFrameSize": "480x270",
-    "bytesReceived": 151915,
-    "bytesSent": 156606,
-    "windowMs": 5025,
-    "inboundVideoKbps": 163,
-    "inboundAudioKbps": 24.73,
-    "decodedFramesPerSecond": 20.1,
-    "audioPacketsPerSecond": 49.95
+    "bytesReceived": 155687,
+    "bytesSent": 149534,
+    "windowMs": 5007,
+    "inboundVideoKbps": 167.9,
+    "inboundAudioKbps": 24.78,
+    "decodedFramesPerSecond": 19.97,
+    "audioPacketsPerSecond": 50.13
   },
   "statsLuis": {
     "connectionState": "connected",
     "selectedPair": {
       "state": "succeeded",
-      "currentRoundTripTimeMs": 1,
-      "totalRoundTripTimeMs": 12,
+      "currentRoundTripTimeMs": 0,
+      "totalRoundTripTimeMs": 6,
       "responsesReceived": 6,
       "local": {
         "candidateType": "host",
@@ -269,21 +273,21 @@ Total 14, PASS 14, FAIL 0.
         "protocol": "udp"
       }
     },
-    "currentRoundTripTimeMs": 1,
+    "currentRoundTripTimeMs": 0,
     "audioJitterMs": 1,
     "videoJitterMs": 1,
     "audioPacketsLost": 0,
     "videoPacketsLost": 0,
-    "audioPacketsReceived": 345,
-    "videoPacketsReceived": 177,
-    "videoFramesDecoded": 134,
+    "audioPacketsReceived": 341,
+    "videoPacketsReceived": 167,
+    "videoFramesDecoded": 132,
     "videoFrameSize": "480x270",
-    "bytesReceived": 156606,
-    "bytesSent": 151915,
-    "windowMs": 5026,
-    "inboundVideoKbps": 165.9,
+    "bytesReceived": 149534,
+    "bytesSent": 155687,
+    "windowMs": 5006,
+    "inboundVideoKbps": 162.49,
     "inboundAudioKbps": 24.53,
-    "decodedFramesPerSecond": 20.1,
+    "decodedFramesPerSecond": 19.98,
     "audioPacketsPerSecond": 49.94
   }
 }
@@ -335,18 +339,18 @@ Total 14, PASS 14, FAIL 0.
     "before": {
       "width": 480,
       "height": 270,
-      "currentTime": 6.864,
+      "currentTime": 6.726858,
       "readyState": 4,
       "hasStream": true,
-      "totalVideoFrames": 138
+      "totalVideoFrames": 135
     },
     "after": {
       "width": 480,
       "height": 270,
-      "currentTime": 8.377268,
+      "currentTime": 8.232607,
       "readyState": 4,
       "hasStream": true,
-      "totalVideoFrames": 168
+      "totalVideoFrames": 165
     },
     "isAdvancing": true
   }
@@ -368,7 +372,7 @@ Total 14, PASS 14, FAIL 0.
 
 **Esperado:** Tras el primer clic la pista de video local tiene enabled=false y el boton dice "Encender cámara"; el audio sigue llegando; tras el segundo clic enabled=true y el video avanza en Luis.
 
-**Observado:** Camara apagada: video enabled=false, boton "Encender cámara"; paquetes de audio en Luis 437 -> 512; encendida: enabled=true, video en Luis avanza.
+**Observado:** Camara apagada: video enabled=false, boton "Encender cámara"; paquetes de audio en Luis 429 -> 504; encendida: enabled=true, video en Luis avanza.
 
 **Verificaciones**
 
@@ -391,25 +395,25 @@ Total 14, PASS 14, FAIL 0.
     "readyState": "live"
   },
   "luisAudioPacketsWhileCameraOff": {
-    "before": 437,
-    "after": 512
+    "before": 429,
+    "after": 504
   },
   "remoteVideoLuisAfterRestore": {
     "before": {
       "width": 640,
       "height": 360,
-      "currentTime": 10.109107,
+      "currentTime": 9.935488,
       "readyState": 4,
       "hasStream": true,
-      "totalVideoFrames": 203
+      "totalVideoFrames": 199
     },
     "after": {
       "width": 640,
       "height": 360,
-      "currentTime": 11.618243,
+      "currentTime": 11.451405,
       "readyState": 4,
       "hasStream": true,
-      "totalVideoFrames": 233
+      "totalVideoFrames": 229
     },
     "isAdvancing": true
   }
@@ -527,7 +531,7 @@ Total 14, PASS 14, FAIL 0.
   "mediaRequest": {
     "ok": false,
     "errorName": "NotAllowedError",
-    "t": 1795046857870
+    "t": 1795234768650
   },
   "invitesSent": 0
 }
@@ -565,9 +569,9 @@ Total 14, PASS 14, FAIL 0.
 {
   "callEnded": {
     "type": "call-ended",
-    "callId": "119297f5-1759-4607-9d2d-5e81b771a925",
+    "callId": "5a6d5d62-4cdc-41cf-81d7-3e8f65fa6bb0",
     "reason": "rejected",
-    "t": 1795046860260
+    "t": 1795234770487
   },
   "releaseAna": {
     "tracks": [
@@ -713,6 +717,43 @@ Total 14, PASS 14, FAIL 0.
 
 ![screenshots/E2E-11-colgado-simultaneo-ana.png](screenshots/E2E-11-colgado-simultaneo-ana.png)
 
+### E2E-15 - Corte breve del chat durante la llamada: aviso de reconexion y la llamada sigue (Recovery) - **PASS**
+
+**Pasos**
+
+1. Ana llama a Luis, Luis contesta y ambos ven el video del otro
+2. Se cierra el WebSocket de Luis sin que la app lo pida (corte de red simulado)
+3. Luis ve el aviso "Reconectando…" con el indicador de carga sobre el video
+4. El chat de Luis reconecta solo y envia call-resume; el aviso desaparece
+5. Esperar hasta 22 s despues del corte (mas que la espera del servidor)
+6. Verificar que ambos siguen "En llamada" y que el video avanza en los dos sentidos
+
+**Esperado:** El aviso de reconexion aparece y se va solo; Luis envia call-resume; pasada la espera del servidor la llamada sigue activa en ambos lados y el video remoto avanza.
+
+**Observado:** Corte simulado del WebSocket de Luis; aviso "Reconectando…" visible y luego oculto; call-resume enviado 1 vez; a los 22 s ambos siguen en llamada con video avanzando.
+
+**Verificaciones**
+
+- [x] Se cerro el WebSocket de Luis
+- [x] Luis pide retomar la llamada una vez al reconectar
+- [x] Ana sigue en llamada
+- [x] Luis sigue en llamada
+- [x] El video avanza en los dos sentidos
+
+- Errores de consola esperados: 0
+- Errores de consola NO esperados: 0
+
+**Metricas**
+
+```json
+{}
+```
+
+**Evidencia**
+
+![screenshots/E2E-15-reconectando-en-llamada.png](screenshots/E2E-15-reconectando-en-llamada.png)
+![screenshots/E2E-15-llamada-retomada.png](screenshots/E2E-15-llamada-retomada.png)
+
 ### E2E-13 - Renovar la invitacion invalida el enlace anterior (Security) - **PASS**
 
 **Pasos**
@@ -744,7 +785,7 @@ Total 14, PASS 14, FAIL 0.
   "forgedRotationByNonOwner": {
     "isRotateHidden": true,
     "wasSent": true,
-    "tokenAfterForgery": "ZMIzEhRoqMrmD8E-d4Nzkg",
+    "tokenAfterForgery": "l5ZuFg1SmYH-Vwu3XFRTNw",
     "unchanged": true
   },
   "oldLinkJoinStatus": 404
@@ -767,7 +808,7 @@ Total 14, PASS 14, FAIL 0.
 
 **Esperado:** Luis vuelve al inicio con "Ya no estás en la sala: saliste, te sacaron o la sala se cerró." (cierre 4403, sesion revocada); la invitacion cambia; el enlace viejo da 404 y "La sala no existe o el enlace ya no es válido"; con el nuevo Luis entra otra vez y Ana lo ve.
 
-**Observado:** Luis: cierre 4403, aviso "Ya no estás en la sala: saliste, te sacaron o la sala se cerró.", GET /session 401. Invitacion renovada. Enlace viejo -> 404; con el nuevo Luis volvio a la sala y Ana lo ve.
+**Observado:** Luis: cierre 4000,4403, aviso "Ya no estás en la sala: saliste, te sacaron o la sala se cerró.", GET /session 401. Invitacion renovada. Enlace viejo -> 404; con el nuevo Luis volvio a la sala y Ana lo ve.
 
 **Verificaciones**
 
@@ -787,6 +828,7 @@ Total 14, PASS 14, FAIL 0.
 ```json
 {
   "closeCodesLuis": [
+    4000,
     4403
   ],
   "sessionAfterExpulsion": {
@@ -814,7 +856,7 @@ Total 14, PASS 14, FAIL 0.
 
 **Esperado:** "Reconectando…" al caer el servidor; tras el reinicio, pantalla de inicio con "Ya no estás en la sala: saliste, te sacaron o la sala se cerró." en ambos; en una sala nueva, "En línea" y ambos se ven otra vez.
 
-**Observado:** Secuencia en Ana: 17ms status=Reconectando… | 2059ms status=Reconectando… | 2086ms home-error=Ya no estás en la sala: saliste, te sacaron o la sala se cerró. | 2086ms home=visible | 2086ms chat=oculto | 2511ms home-error=oculto | 2520ms home=oculto | 2520ms chat=visible | 2537ms status=En línea. Servidor caido 863 ms; inicio visible 1185 ms despues del reinicio; "En línea" 75 ms despues de crear la sala nueva.
+**Observado:** Secuencia en Ana: 4ms status=Reconectando… | 2026ms status=Reconectando… | 2036ms home-error=Ya no estás en la sala: saliste, te sacaron o la sala se cerró. | 2036ms home=visible | 2036ms chat=oculto | 2484ms home-error=oculto | 2490ms home=oculto | 2490ms chat=visible | 2496ms status=En línea. Servidor caido 565 ms; inicio visible 1453 ms despues del reinicio; "En línea" 41 ms despues de crear la sala nueva.
 
 **Verificaciones**
 
@@ -824,10 +866,10 @@ Total 14, PASS 14, FAIL 0.
 
 - Errores de consola esperados: 6
   - ana (console:pestana-1): `Failed to load resource: net::ERR_CONNECTION_REFUSED`
-  - ana (console:pestana-1): `WebSocket connection to 'wss://localhost:59015/' failed: HTTP Authentication failed; no valid credentials available`
+  - ana (console:pestana-1): `WebSocket connection to 'wss://localhost:60281/' failed: HTTP Authentication failed; no valid credentials available`
   - ana (console:pestana-1): `Failed to load resource: the server responded with a status of 401 (Unauthorized)`
   - luis (console:pestana-1): `Failed to load resource: net::ERR_CONNECTION_REFUSED`
-  - luis (console:pestana-1): `WebSocket connection to 'wss://localhost:59015/' failed: HTTP Authentication failed; no valid credentials available`
+  - luis (console:pestana-1): `WebSocket connection to 'wss://localhost:60281/' failed: HTTP Authentication failed; no valid credentials available`
   - luis (console:pestana-1): `Failed to load resource: the server responded with a status of 401 (Unauthorized)`
 - Errores de consola NO esperados: 0
 
@@ -837,55 +879,55 @@ Total 14, PASS 14, FAIL 0.
 {
   "uiSequenceAna": [
     {
-      "atMs": 17,
+      "atMs": 4,
       "element": "status",
       "shown": "Reconectando…"
     },
     {
-      "atMs": 2059,
+      "atMs": 2026,
       "element": "status",
       "shown": "Reconectando…"
     },
     {
-      "atMs": 2086,
+      "atMs": 2036,
       "element": "home-error",
       "shown": "Ya no estás en la sala: saliste, te sacaron o la sala se cerró."
     },
     {
-      "atMs": 2086,
+      "atMs": 2036,
       "element": "home",
       "shown": "visible"
     },
     {
-      "atMs": 2086,
+      "atMs": 2036,
       "element": "chat",
       "shown": "oculto"
     },
     {
-      "atMs": 2511,
+      "atMs": 2484,
       "element": "home-error",
       "shown": "oculto"
     },
     {
-      "atMs": 2520,
+      "atMs": 2490,
       "element": "home",
       "shown": "oculto"
     },
     {
-      "atMs": 2520,
+      "atMs": 2490,
       "element": "chat",
       "shown": "visible"
     },
     {
-      "atMs": 2537,
+      "atMs": 2496,
       "element": "status",
       "shown": "En línea"
     }
   ],
-  "killToReconnectingMs": 2021,
-  "serverDowntimeMs": 863,
-  "restartToHomeShownMs": 1185,
-  "newRoomToOnlineMs": 75
+  "killToReconnectingMs": 2008,
+  "serverDowntimeMs": 565,
+  "restartToHomeShownMs": 1453,
+  "newRoomToOnlineMs": 41
 }
 ```
 
@@ -914,8 +956,7 @@ Total 14, PASS 14, FAIL 0.
 - [x] Recursos liberados en ambos lados
 - [x] callsActive vuelve a 0
 
-- Errores de consola esperados: 2
-  - ana (console:pestana-1): `Failed to load resource: the server responded with a status of 401 (Unauthorized)`
+- Errores de consola esperados: 1
   - ana (console:pestana-1): `Failed to load resource: the server responded with a status of 401 (Unauthorized)`
 - Errores de consola NO esperados: 0
 

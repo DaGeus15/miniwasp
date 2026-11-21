@@ -33,6 +33,7 @@ export class CallView {
   #securityCode;
   #localVideo;
   #remoteVideo;
+  #reconnecting;
   #controls;
 
   constructor(document) {
@@ -42,6 +43,7 @@ export class CallView {
     this.#securityCode = document.querySelector('#call-security-code');
     this.#localVideo = document.querySelector('#local-video');
     this.#remoteVideo = document.querySelector('#remote-video');
+    this.#reconnecting = document.querySelector('#call-reconnecting');
     this.#controls = new Map([
       [Control.ACCEPT, document.querySelector('#call-accept')],
       [Control.REJECT, document.querySelector('#call-reject')],
@@ -99,6 +101,10 @@ export class CallView {
     this.#remoteVideo.srcObject = stream;
   }
 
+  showReconnecting(isReconnecting) {
+    this.#reconnecting.hidden = !isReconnecting;
+  }
+
   showMicrophoneEnabled(isEnabled) {
     renderToggle(
       this.#controls.get(Control.MICROPHONE),
@@ -114,6 +120,7 @@ export class CallView {
 
   hide() {
     this.#panel.hidden = true;
+    this.showReconnecting(false);
     this.#securityCode.hidden = true;
     this.#securityCode.textContent = '';
     this.#localVideo.hidden = true;

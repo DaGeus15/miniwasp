@@ -22,6 +22,7 @@ describe('contrato del protocolo', () => {
       CALL_REJECT: 'call-reject',
       CALL_HANGUP: 'call-hangup',
       CALL_SIGNAL: 'call-signal',
+      CALL_RESUME: 'call-resume',
     });
   });
 

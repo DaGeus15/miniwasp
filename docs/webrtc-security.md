@@ -39,8 +39,21 @@ conexiones; también termina su llamada.
 - **No es cifrado de extremo a extremo frente al servidor.** La app no lo declara. DTLS-SRTP P2P
   cifra entre los dos navegadores y el servidor nunca recibe medios, pero la autenticidad de las
   claves depende del código de seguridad verificado por las personas.
-- **TURN:** no se usa. No hay credenciales de relay que exponer: el cliente solo recibe URLs STUN
-  (CP-016). Consecuencia: en redes que bloquean la conexión directa la llamada falla con un aviso.
+- **TURN (opcional, Cloudflare Realtime):** con `TURN_KEY_ID` y `TURN_KEY_API_TOKEN` el servidor
+  pide a Cloudflare credenciales de 1 hora **para cada llamada** y solo las entrega por
+  `GET /rooms/ice-servers` a una sesión con una llamada sonando o en curso (fuera de una llamada
+  responde 409 `NOT_IN_CALL`), con límites por IP y por sesión. Quien llama las pide recién cuando
+  la otra persona acepta, y el navegador las renueva cada 45 minutos con `setConfiguration`. La
+  clave de la API nunca llega al navegador, y la bienvenida del WebSocket solo trae URLs STUN
+  (CP-016). Se descartan las URLs del puerto 53, que los navegadores bloquean. El retransmisor ve las
+  IP y el tráfico, pero no el contenido: el audio y el video siguen cifrados con DTLS-SRTP entre los
+  dos navegadores. Sin la clave, solo STUN: entre redes que impiden la conexión directa la llamada
+  falla con un aviso.
+- **Reconexión durante una llamada:** si a alguien se le cae el WebSocket con la llamada ya
+  contestada, el servidor la sostiene 20 s y el navegador muestra "Reconectando…". Solo la **misma
+  sesión** puede retomarla (`call-resume` con el id de la llamada); otra persona recibe que la
+  llamada terminó, igual que si el id no existiera. Si la sesión terminó (salió, la sacaron o se
+  cerró la sala), la llamada termina enseguida.
 
 ## Privacidad de participantes
 
@@ -52,7 +65,7 @@ conexiones; también termina su llamada.
 | Liberación | Al terminar por cualquier motivo se detienen todas las pistas, incluso si la llamada terminó mientras se pedía el permiso (`LocalMedia.release`) |
 | Grabaciones | No existen; ni el cliente ni el servidor graban audio o video |
 | Metadatos | El servidor registra ids opacos y motivos, nunca nombres, mensajes, SDP, IP ni tokens (CP-017) |
-| IP por ICE | Solo se intercambian candidatos después de aceptar; la otra persona y el STUN ven la IP |
+| IP por ICE | Solo se intercambian candidatos después de aceptar; la otra persona, el STUN y, si se usa, el TURN de Cloudflare ven la IP |
 
 ## Ciclo de vida verificado
 

@@ -121,6 +121,7 @@ export function createCallRoutes({ calls, signalLimiter, inviteLimiter }) {
     [ClientEvent.CALL_ACCEPT, signalRoute((peer, { callId }) => calls.accept(peer, callId))],
     [ClientEvent.CALL_REJECT, signalRoute((peer, { callId }) => calls.reject(peer, callId))],
     [ClientEvent.CALL_HANGUP, signalRoute((peer, { callId }) => calls.hangUp(peer, callId))],
+    [ClientEvent.CALL_RESUME, signalRoute((peer, { callId }) => calls.resume(peer, callId))],
     [
       ClientEvent.CALL_SIGNAL,
       signalRoute((peer, { callId, signal }) => calls.relaySignal(peer, callId, signal)),

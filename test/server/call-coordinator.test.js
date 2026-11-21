@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { setTimeout as wait } from 'node:timers/promises';
 import {
   CallCoordinator,
+  DEFAULT_RETURN_GRACE_MS,
   DEFAULT_RING_TIMEOUT_MS,
 } from '../../src/server/calls/call-coordinator.js';
 import { Metric, Metrics } from '../../src/server/observability/metrics.js';
@@ -24,8 +25,9 @@ class FakePeer {
     return other?.roomId === this.roomId;
   }
 
-  constructor(id) {
+  constructor(id, sessionId = id) {
     this.id = id;
+    this.sessionId = sessionId;
   }
 
   toPublicProfile() {
@@ -605,5 +607,112 @@ describe('CallCoordinator: salas', () => {
 
     assert.equal(caller.lastEvent.reason, CallEndReason.UNAVAILABLE);
     assert.equal(callee.events.length, 0);
+  });
+});
+
+describe('CallCoordinator: reconexion durante una llamada', () => {
+  function interrupt(context) {
+    const callId = establishCall(context);
+    negotiate(context, callId);
+    context.coordinator.handleDeparture(context.callee, { canReturn: true });
+    return callId;
+  }
+
+  it('una llamada contestada espera a quien perdio la conexion en lugar de cortarse', () => {
+    const context = setup();
+    const callId = interrupt(context);
+
+    assert.equal(context.caller.lastEvent.type, ServerEvent.CALL_SIGNAL);
+    assert.equal(context.rings.at(-1).delayMs, DEFAULT_RETURN_GRACE_MS);
+    assert.equal(context.rings.at(-1).isCancelled, false);
+    context.coordinator.hangUp(context.caller, callId);
+    assert.equal(context.rings.at(-1).isCancelled, true);
+  });
+
+  it('la misma sesion retoma la llamada con su conexion nueva y la senalizacion sigue', () => {
+    const context = setup();
+    const callId = interrupt(context);
+    const returning = new FakePeer('luis-2', context.callee.sessionId);
+
+    context.coordinator.resume(returning, callId);
+    context.coordinator.relaySignal(context.caller, callId, candidate);
+
+    assert.equal(context.rings.at(-1).isCancelled, true);
+    assert.deepEqual([returning.lastEvent.type, returning.lastEvent.signal.kind], [ServerEvent.CALL_SIGNAL, SignalKind.CANDIDATE]);
+    context.coordinator.hangUp(returning, callId);
+    assert.equal(context.caller.lastEvent.reason, CallEndReason.HANGUP);
+  });
+
+  it('tambien quien llamo puede volver y seguir la llamada', () => {
+    const context = setup();
+    const callId = establishCall(context);
+    negotiate(context, callId);
+    context.coordinator.handleDeparture(context.caller, { canReturn: true });
+    const returning = new FakePeer('ana-2', context.caller.sessionId);
+
+    context.coordinator.resume(returning, callId);
+    context.coordinator.relaySignal(context.callee, callId, candidate);
+
+    assert.equal(returning.lastEvent.type, ServerEvent.CALL_SIGNAL);
+  });
+
+  it('si nadie vuelve a tiempo, la llamada termina por desconexion', () => {
+    const context = setup();
+    const callId = interrupt(context);
+
+    context.rings.at(-1).onTimeout();
+
+    assert.deepEqual(context.caller.lastEvent, { type: ServerEvent.CALL_ENDED, callId, reason: CallEndReason.DISCONNECTED });
+  });
+
+  it('otra sesion no puede tomar la llamada: solo recibe que termino', () => {
+    const context = setup();
+    const callId = interrupt(context);
+
+    context.coordinator.resume(context.outsider, callId);
+
+    assert.deepEqual(context.outsider.lastEvent, { type: ServerEvent.CALL_ENDED, callId, reason: CallEndReason.DISCONNECTED });
+    assert.equal(context.rings.at(-1).isCancelled, false);
+    assert.equal(context.caller.lastEvent.type, ServerEvent.CALL_SIGNAL);
+  });
+
+  it('la conexion nueva reemplaza a una anterior que el servidor aun no vio caerse', () => {
+    const context = setup();
+    const callId = establishCall(context);
+    const returning = new FakePeer('luis-2', context.callee.sessionId);
+
+    context.coordinator.resume(returning, callId);
+    context.coordinator.handleDeparture(context.callee, { canReturn: true });
+    context.coordinator.relaySignal(context.caller, callId, offer);
+
+    assert.equal(returning.lastEvent.type, ServerEvent.CALL_SIGNAL);
+    assert.equal(context.caller.lastEvent.type, ServerEvent.CALL_ACCEPTED);
+  });
+
+  it('sin sesion vigente, mientras suena o si ya faltaba la otra persona, corta enseguida', () => {
+    const ended = setup();
+    establishCall(ended);
+    ended.coordinator.handleDeparture(ended.callee, { canReturn: false });
+    assert.equal(ended.caller.lastEvent.reason, CallEndReason.DISCONNECTED);
+
+    const ringing = setup();
+    startCall(ringing);
+    ringing.coordinator.handleDeparture(ringing.callee, { canReturn: true });
+    assert.equal(ringing.caller.lastEvent.reason, CallEndReason.DISCONNECTED);
+
+    const both = setup();
+    interrupt(both);
+    both.coordinator.handleDeparture(both.caller, { canReturn: true });
+    assert.equal(both.caller.lastEvent.reason, CallEndReason.DISCONNECTED);
+  });
+
+  it('retomar una llamada que ya termino avisa que termino; un id que no es texto es un error', () => {
+    const context = setup();
+    const returning = new FakePeer('luis-2', 'luis');
+
+    context.coordinator.resume(returning, 'no-existe');
+
+    assert.equal(returning.lastEvent.reason, CallEndReason.DISCONNECTED);
+    assert.throws(() => context.coordinator.resume(returning, 42), ValidationError);
   });
 });

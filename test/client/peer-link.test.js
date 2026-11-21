@@ -193,3 +193,17 @@ describe('PeerLink: codigo de seguridad', () => {
     assert.equal(await link.securityCode(), null);
   });
 });
+
+describe('PeerLink: renovacion de credenciales', () => {
+  it('cambia los servidores ICE sin rehacer la conexion y tolera un navegador que no lo acepta', () => {
+    const { link, connection } = setup();
+    const renewed = [{ urls: 'turn:turn.test', username: 'u', credential: 'nueva' }];
+
+    link.updateIceServers(renewed);
+    assert.deepEqual(connection.configuration, { iceServers: renewed });
+
+    connection.rejectsConfiguration = true;
+    assert.doesNotThrow(() => link.updateIceServers(iceServers));
+    assert.deepEqual(connection.configuration, { iceServers: renewed });
+  });
+});

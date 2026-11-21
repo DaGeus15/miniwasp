@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { CallController } from '../../src/client/calls/call-controller.js';
+import { CallController, RETURN_GRACE_MS } from '../../src/client/calls/call-controller.js';
 import { CallPhase } from '../../src/client/calls/call-phase.js';
 import { LocalMedia } from '../../src/client/calls/local-media.js';
 import { CallEndReason, SignalKind } from '../../src/shared/events.js';
@@ -36,6 +36,10 @@ class SpySignaling {
 
   relay(id, signal) {
     return this.#record('relay', { id, signal });
+  }
+
+  resume(id) {
+    return this.#record('resume', id);
   }
 }
 
@@ -76,8 +80,13 @@ class SpyView {
     this.securityCode = code;
   }
 
+  showReconnecting(isReconnecting) {
+    this.isReconnecting = isReconnecting;
+  }
+
   hide() {
     this.isHidden = true;
+    this.isReconnecting = false;
   }
 }
 
@@ -105,8 +114,10 @@ class SpyLink {
   }
 }
 
-function setup({ getUserMedia, createLink } = {}) {
+function setup({ getUserMedia, createLink, iceServers = [] } = {}) {
   const signaling = new SpySignaling();
+  const timers = [];
+  const renewals = [];
   const view = new SpyView();
   const stream = new FakeStream();
   const links = [];
@@ -115,6 +126,11 @@ function setup({ getUserMedia, createLink } = {}) {
   const controller = new CallController({
     signaling,
     view,
+    iceServers: {
+      forCall: async () => iceServers,
+      keepRenewed: (link, isCurrent) => renewals.push({ link, isCurrent }),
+    },
+    schedule: (callback, delayMs) => timers.push({ callback, delayMs }),
     notices: {
       show: (key) => notices.shown.push(key),
       clear: () => {
@@ -131,7 +147,7 @@ function setup({ getUserMedia, createLink } = {}) {
       }),
   });
 
-  return { controller, signaling, view, stream, links, notices };
+  return { controller, signaling, view, stream, links, notices, timers, renewals };
 }
 
 async function startOutgoingCall(context) {
@@ -141,7 +157,7 @@ async function startOutgoingCall(context) {
 
 async function establishOutgoingCall(context) {
   await startOutgoingCall(context);
-  context.controller.handleAccepted({ callId });
+  await context.controller.handleAccepted({ callId });
   context.links[0].options.onConnected();
 }
 
@@ -221,20 +237,19 @@ describe('CallController: llamada saliente', () => {
     await startOutgoingCall(context);
     assert.equal(context.links.length, 0);
 
-    context.controller.handleAccepted({ callId });
+    await context.controller.handleAccepted({ callId });
 
     assert.equal(context.view.currentPhase, CallPhase.CONNECTING);
     assert.equal(context.links[0].offersStarted, 1);
     assert.equal(context.links[0].options.stream, context.stream);
   });
 
-  it('usa los servidores ICE configurados', async () => {
-    const context = setup();
-    const iceServers = [{ urls: 'stun:stun.test' }];
-    context.controller.useIceServers(iceServers);
+  it('usa los servidores ICE pedidos para esta llamada', async () => {
+    const iceServers = [{ urls: 'turn:turn.test', username: 'u', credential: 'c' }];
+    const context = setup({ iceServers });
     await startOutgoingCall(context);
 
-    context.controller.handleAccepted({ callId });
+    await context.controller.handleAccepted({ callId });
 
     assert.equal(context.links[0].options.iceServers, iceServers);
   });
@@ -247,7 +262,7 @@ describe('CallController: llamada saliente', () => {
     });
     await startOutgoingCall(context);
 
-    context.controller.handleAccepted({ callId });
+    await context.controller.handleAccepted({ callId });
 
     assert.deepEqual(context.notices.shown, ['callFailed']);
     assert.deepEqual(context.signaling.sent.at(-1), ['hangUp', callId]);
@@ -257,7 +272,7 @@ describe('CallController: llamada saliente', () => {
     const context = setup();
     await startOutgoingCall(context);
 
-    context.controller.handleAccepted({ callId: 'otra' });
+    await context.controller.handleAccepted({ callId: 'otra' });
 
     assert.equal(context.links.length, 0);
   });
@@ -538,14 +553,118 @@ describe('CallController: fin de la llamada', () => {
     assert.deepEqual(notices.shown, []);
   });
 
-  it('termina la llamada si se pierde el servidor', async () => {
+  it('si se pierde el servidor mientras suena, la llamada termina', async () => {
     const context = setup();
-    await establishOutgoingCall(context);
+    await startOutgoingCall(context);
 
     context.controller.handleConnectionLost();
 
     assert.deepEqual(context.notices.shown, ['callDisconnected']);
     assert.equal(context.signaling.sent.some(([action]) => action === 'hangUp'), false);
+  });
+
+  it('una llamada en curso sigue mientras reconecta y al volver pide retomarla', async () => {
+    const context = setup();
+    await establishOutgoingCall(context);
+
+    context.controller.handleConnectionLost();
+    assert.equal(context.view.isReconnecting, true);
+    assert.equal(context.view.isHidden, false);
+    assert.equal(context.timers[0].delayMs, RETURN_GRACE_MS);
+
+    context.controller.handleConnectionRestored();
+    context.timers[0].callback();
+
+    assert.equal(context.view.isReconnecting, false);
+    assert.deepEqual(context.signaling.sent.at(-1), ['resume', callId]);
+    assert.equal(context.view.isHidden, false);
+    assert.deepEqual(context.notices.shown, []);
+  });
+
+  it('si no reconecta a tiempo, la llamada termina; un corte viejo no cierra uno nuevo', async () => {
+    const context = setup();
+    await establishOutgoingCall(context);
+    context.controller.handleConnectionLost();
+    context.controller.handleConnectionRestored();
+    context.controller.handleConnectionLost();
+
+    context.timers[0].callback();
+    assert.equal(context.view.isHidden, false);
+    context.timers[1].callback();
+
+    assert.equal(context.view.isHidden, true);
+    assert.deepEqual(context.notices.shown, ['callDisconnected']);
+  });
+
+  it('salir de la sala cierra la llamada aunque estuviera esperando reconectar', async () => {
+    const context = setup();
+    await establishOutgoingCall(context);
+    context.controller.handleConnectionLost();
+
+    context.controller.handleRoomLeft();
+    context.controller.handleRoomLeft();
+
+    assert.equal(context.view.isHidden, true);
+    assert.equal(context.links[0].isClosed, true);
+    assert.deepEqual(context.notices.shown, []);
+  });
+
+  it('las credenciales se renuevan desde que la llamada se establece, una sola vez y solo mientras siga', async () => {
+    const context = setup();
+    await establishOutgoingCall(context);
+    context.links[0].options.onConnected();
+
+    assert.equal(context.renewals.length, 1);
+    assert.equal(context.renewals[0].link, context.links[0]);
+    assert.equal(context.renewals[0].isCurrent(), true);
+    context.controller.hangUp();
+    assert.equal(context.renewals[0].isCurrent(), false);
+  });
+
+  it('quien llama pide los servidores ICE recien cuando aceptan, y no abre nada si colgo mientras', async () => {
+    const context = setup();
+    let requests = 0;
+    let finishRequest;
+    context.controller = new CallController({
+      signaling: context.signaling,
+      view: context.view,
+      notices: { show() {}, clear() {} },
+      createMedia: () => new LocalMedia(async () => context.stream),
+      createLink: (options) => {
+        context.links.push(new SpyLink(options));
+        return context.links.at(-1);
+      },
+      schedule() {},
+      iceServers: {
+        forCall: () => {
+          requests += 1;
+          return new Promise((resolve) => {
+            finishRequest = resolve;
+          });
+        },
+        keepRenewed() {},
+      },
+    });
+    await startOutgoingCall(context);
+    assert.equal(requests, 0);
+
+    const accepting = context.controller.handleAccepted({ callId });
+    context.controller.hangUp();
+    finishRequest([]);
+    await accepting;
+
+    assert.equal(requests, 1);
+    assert.equal(context.links.length, 0);
+  });
+
+  it('volver en linea sin un corte pendiente no envia nada', async () => {
+    const context = setup();
+    await establishOutgoingCall(context);
+    const sentBefore = context.signaling.sent.length;
+
+    context.controller.handleConnectionRestored();
+
+    assert.equal(context.signaling.sent.length, sentBefore);
   });
 
   it('perder el servidor sin llamada no hace nada', () => {
@@ -560,7 +679,7 @@ describe('CallController: fin de la llamada', () => {
 describe('CallController: codigo de seguridad', () => {
   async function connectWithCode(context, securityCode) {
     await startOutgoingCall(context);
-    context.controller.handleAccepted({ callId });
+    await context.controller.handleAccepted({ callId });
     context.links[0].securityCode = securityCode;
     context.links[0].options.onConnected();
   }

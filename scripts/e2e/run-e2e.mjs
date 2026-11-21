@@ -1,6 +1,6 @@
 // Prueba E2E del ciclo de vida de una videollamada con dos Chrome reales e independientes.
 // Uso: npm run e2e  (opcional: CHROME_PATH=ruta\a\chrome.exe)
-// Arranca la app por HTTPS en localhost en un puerto libre, ejecuta los escenarios E2E-01..E2E-14
+// Arranca la app por HTTPS en localhost en un puerto libre, ejecuta los escenarios E2E-01..E2E-15
 // (Ana crea la sala y Luis entra con el enlace) y escribe docs/evidence/e2e/report.{json,md}.
 import { mkdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -18,6 +18,7 @@ import {
   simultaneousHangUp,
 } from './scenarios/interruption-scenarios.mjs';
 import { expelMember, inviteRotation } from './scenarios/membership-scenarios.mjs';
+import { chatDropDuringCall } from './scenarios/reconnect-scenarios.mjs';
 import { serverRestartWhileIdle } from './scenarios/recovery-scenarios.mjs';
 import { invalidInviteRejected, roomCreatedAndJoined } from './scenarios/room-scenarios.mjs';
 
@@ -38,6 +39,7 @@ const SCENARIOS = [
   rejectIncomingCall,
   callerCancelsWhileRinging,
   simultaneousHangUp,
+  chatDropDuringCall,
   inviteRotation,
   expelMember,
   serverRestartWhileIdle,

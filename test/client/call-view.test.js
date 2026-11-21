@@ -160,3 +160,20 @@ describe('CallView: codigo de seguridad', () => {
     assert.equal(element('#call-security-code').textContent, '');
   });
 });
+
+describe('CallView: reconexion', () => {
+  it('muestra el aviso con indicador de carga mientras reconecta y lo quita al ocultarse', () => {
+    const { view, element } = setup();
+    view.showPhase(CallPhase.ACTIVE, 'Luis');
+    assert.equal(element('#call-reconnecting').hidden, true);
+
+    view.showReconnecting(true);
+    assert.equal(element('#call-reconnecting').hidden, false);
+    assert.equal(element('#call-reconnecting').getAttribute('role'), 'status');
+    assert.ok(element('#call-reconnecting .call-spinner'));
+    assert.match(element('#call-reconnecting').textContent, /Reconectando/);
+
+    view.hide();
+    assert.equal(element('#call-reconnecting').hidden, true);
+  });
+});

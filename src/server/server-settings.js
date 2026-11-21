@@ -1,5 +1,6 @@
 import { VideoCallRegistry } from './api/video-call-registry.js';
 import { MemoryBlobStorage } from './attachments/memory-blob-storage.js';
+import { StaticIceServers } from './calls/ice-server-provider.js';
 import { ImageInspector } from './moderation/image-inspector.js';
 import { StrikeTracker } from './moderation/strike-tracker.js';
 import { TextModerator } from './moderation/text-moderator.js';
@@ -24,13 +25,15 @@ const REPORT_RATE = { limit: 10, windowMs: 60000 };
 const PUBLIC_ROOM_CREATION_RATE = { limit: 3, windowMs: 10 * 60 * 1000 };
 const PUBLIC_LIST_RATE = { limit: 60, windowMs: 60000 };
 const WHISPER_INVITE_RATE = { limit: 5, windowMs: 60000 };
+// Cada llamada pide servidores ICE en los dos lados; con TURN, cada pedido crea credenciales.
+const ICE_SERVER_RATE = { limit: 60, windowMs: 10 * 60 * 1000 };
+// Por sesion: contestar o ser aceptado y renovar cada 45 minutos caben con holgura.
+const ICE_SERVER_SESSION_RATE = { limit: 10, windowMs: 10 * 60 * 1000 };
 // Tope de personas por sala: acota cuanto trafico genera cada difusion.
 export const DEFAULT_MAX_ROOM_MEMBERS = 20;
 
-// Valores por defecto del servidor. Cualquier pieza puede reemplazarse (por ejemplo, en pruebas).
-export function withDefaults(options = {}) {
+function createLimiters() {
   return {
-    sessions: new SessionStore({ maxSessions: options.maxSessions }),
     chatLimiter: createRateLimiter(),
     signalLimiter: createRateLimiter(SIGNAL_RATE),
     inviteLimiter: createRateLimiter(INVITE_RATE),
@@ -42,6 +45,16 @@ export function withDefaults(options = {}) {
     publicRoomCreationLimiter: createRateLimiter(PUBLIC_ROOM_CREATION_RATE),
     publicListLimiter: createRateLimiter(PUBLIC_LIST_RATE),
     whisperLimiter: createRateLimiter(WHISPER_INVITE_RATE),
+    iceServerLimiter: createRateLimiter(ICE_SERVER_RATE),
+    iceServerSessionLimiter: createRateLimiter(ICE_SERVER_SESSION_RATE),
+  };
+}
+
+// Valores por defecto del servidor. Cualquier pieza puede reemplazarse (por ejemplo, en pruebas).
+export function withDefaults(options = {}) {
+  return {
+    sessions: new SessionStore({ maxSessions: options.maxSessions }),
+    ...createLimiters(),
     maxRoomMembers: DEFAULT_MAX_ROOM_MEMBERS,
     connectionGuard: new ConnectionGuard({ maxConnections: options.maxConnections }),
     logger: new Logger(),
@@ -54,6 +67,7 @@ export function withDefaults(options = {}) {
     // El analisis de imagenes arranca sus hilos solo cuando llega la primera imagen.
     imageInspector: new ImageInspector({ workers: options.imageModerationWorkers }),
     iceServers: [],
+    iceServerProvider: new StaticIceServers(options.iceServers ?? []),
     trustedProxyHeader: null,
     tls: null,
     ...options,

@@ -1,3 +1,4 @@
+import { CloudflareTurnServers } from './calls/ice-server-provider.js';
 import { createS3BlobStorage } from './attachments/s3-blob-storage.js';
 import { loadConfig } from './config.js';
 import { createChatServer } from './create-chat-server.js';
@@ -5,10 +6,13 @@ import { installProcessHandlers } from './graceful-shutdown.js';
 import { listLanAddresses } from './lan-addresses.js';
 import { Logger } from './observability/logger.js';
 
-const { port, host, objectStorage, ...serverOptions } = loadConfig();
+const { port, host, objectStorage, turnKey, ...serverOptions } = loadConfig();
 const logger = new Logger();
 const storageOptions = objectStorage ? { blobStorage: createS3BlobStorage(objectStorage) } : {};
-const server = createChatServer({ ...serverOptions, ...storageOptions, logger });
+const turnOptions = turnKey
+  ? { iceServerProvider: new CloudflareTurnServers({ ...turnKey, fallback: serverOptions.iceServers, logger }) }
+  : {};
+const server = createChatServer({ ...serverOptions, ...storageOptions, ...turnOptions, logger });
 
 installProcessHandlers({ server, logger });
 const boundPort = await server.listen(port, host);

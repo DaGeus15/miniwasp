@@ -64,6 +64,17 @@ export class FakePeerConnection extends EventTarget {
     this.candidates.push(candidate);
   }
 
+  getConfiguration() {
+    return this.configuration;
+  }
+
+  setConfiguration(configuration) {
+    if (this.rejectsConfiguration) {
+      throw new TypeError('configuracion no valida');
+    }
+    this.configuration = configuration;
+  }
+
   close() {
     this.isClosed = true;
   }

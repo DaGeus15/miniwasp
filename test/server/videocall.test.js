@@ -8,6 +8,17 @@ import { expectSilence, openClient, stopServer } from '../support/ws-client.js';
 
 const offer = { kind: SignalKind.OFFER, sdp: 'v=0' };
 const iceServers = [{ urls: 'stun:stun.test:3478' }];
+// Corto para que la prueba no espere, y suficiente para reconectar en una maquina ocupada.
+const RETURN_GRACE_MS = 1500;
+
+// Salta los avisos de presencia (alguien entra o sale) hasta el evento buscado.
+async function nextOfType(client, type) {
+  let event = await client.next();
+  while (event.type !== type) {
+    event = await client.next();
+  }
+  return event;
+}
 
 describe('senalizacion de videollamadas', () => {
   let room;
@@ -21,8 +32,8 @@ describe('senalizacion de videollamadas', () => {
   }
 
   // Cada prueba lee solo sus eventos: el historial y la bienvenida ya se consumieron.
-  async function connect(name) {
-    const cookie = await room.memberCookie();
+  async function connect(name, existingCookie = null) {
+    const cookie = existingCookie ?? (await room.memberCookie());
     const client = openClient(room.wsUrl, {
       headers: { Cookie: cookie },
       ignoredEvents: [ServerEvent.HISTORY],
@@ -34,7 +45,7 @@ describe('senalizacion de videollamadas', () => {
       client.send({ type: ClientEvent.PRESENCE, name });
       await waitForPeer(client, welcome.peerId);
     }
-    return { ...client, id: welcome.peerId, welcome };
+    return { ...client, id: welcome.peerId, welcome, cookie };
   }
 
   async function connectPair() {
@@ -61,7 +72,7 @@ describe('senalizacion de videollamadas', () => {
 
   beforeEach(async () => {
     clients = [];
-    room = await startRoomServer({ iceServers });
+    room = await startRoomServer({ iceServers, callReturnGraceMs: RETURN_GRACE_MS });
   });
 
   afterEach(async () => {
@@ -158,16 +169,45 @@ describe('senalizacion de videollamadas', () => {
     assert.deepEqual(await callee.next(), expected);
   });
 
-  it('corta la llamada si alguien se desconecta', async () => {
+  it('corta la llamada si quien se desconecto no vuelve a tiempo', async () => {
     const { caller, callee, callId } = await establishCall();
 
     callee.socket.terminate();
 
-    assert.deepEqual(await caller.next(), {
+    assert.deepEqual(await nextOfType(caller, ServerEvent.CALL_ENDED), {
       type: ServerEvent.CALL_ENDED,
       callId,
       reason: CallEndReason.DISCONNECTED,
     });
+  });
+
+  it('si a alguien se le cae la conexion, retoma la llamada al volver con su misma sesion', async () => {
+    const { caller, callee, callId } = await establishCall();
+    caller.send({ type: ClientEvent.CALL_SIGNAL, callId, signal: offer });
+    await nextOfType(callee, ServerEvent.CALL_SIGNAL);
+
+    callee.socket.terminate();
+    const returning = await connect('Luis', callee.cookie);
+    returning.send({ type: ClientEvent.CALL_RESUME, callId });
+    caller.send({ type: ClientEvent.CALL_SIGNAL, callId, signal: { kind: SignalKind.CANDIDATE, candidate: { candidate: 'candidate:1' } } });
+
+    assert.equal((await nextOfType(returning, ServerEvent.CALL_SIGNAL)).signal.kind, SignalKind.CANDIDATE);
+    await new Promise((resolve) => {
+      setTimeout(resolve, RETURN_GRACE_MS + 300);
+    });
+    returning.send({ type: ClientEvent.CALL_HANGUP, callId });
+    assert.equal((await nextOfType(caller, ServerEvent.CALL_ENDED)).reason, CallEndReason.HANGUP);
+  });
+
+  it('otra persona de la sala no puede retomar una llamada ajena', async () => {
+    const { caller, callee, callId } = await establishCall();
+    const outsider = await connect('Rosa');
+
+    outsider.send({ type: ClientEvent.CALL_RESUME, callId });
+
+    assert.equal((await nextOfType(outsider, ServerEvent.CALL_ENDED)).reason, CallEndReason.DISCONNECTED);
+    caller.send({ type: ClientEvent.CALL_HANGUP, callId });
+    assert.equal((await nextOfType(callee, ServerEvent.CALL_ENDED)).reason, CallEndReason.HANGUP);
   });
 
   it('rechaza senales mal formadas sin reenviarlas', async () => {

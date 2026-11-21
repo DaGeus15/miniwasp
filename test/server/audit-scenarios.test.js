@@ -73,7 +73,8 @@ describe('escenarios de auditoria', () => {
     assert.equal(await expectSilence(ana), true);
   });
 
-  it('CP-016: el cliente solo recibe URLs STUN, nunca credenciales de relay', async () => {
+  // Las credenciales TURN de corta duracion solo salen por GET /rooms/ice-servers (ice-servers.test.js).
+  it('CP-016: la bienvenida solo trae URLs STUN, nunca credenciales de relay', async () => {
     const ana = await connectAs('Ana');
 
     for (const iceServer of ana.welcome.iceServers) {

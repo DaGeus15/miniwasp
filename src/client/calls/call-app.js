@@ -2,6 +2,7 @@ import { ServerEvent } from '../../shared/events.js';
 import { CallController } from './call-controller.js';
 import { CallSignaling } from './call-signaling.js';
 import { CallView } from './call-view.js';
+import { IceServerSource } from './ice-server-source.js';
 import { LocalMedia } from './local-media.js';
 import { PeerLink } from './peer-link.js';
 
@@ -13,9 +14,9 @@ function bindCallView(callView, calls) {
   callView.onHangUp(() => calls.hangUp());
 }
 
-function createEventHandlers(calls) {
+function createEventHandlers(calls, iceServers) {
   return new Map([
-    [ServerEvent.WELCOME, (event) => calls.useIceServers(event.iceServers)],
+    [ServerEvent.WELCOME, (event) => iceServers.useWelcomeServers(event.iceServers)],
     [ServerEvent.CALL_RINGING, (event) => calls.handleRinging(event)],
     [ServerEvent.CALL_INCOMING, (event) => calls.handleIncoming(event)],
     [ServerEvent.CALL_ACCEPTED, (event) => calls.handleAccepted(event)],
@@ -25,9 +26,12 @@ function createEventHandlers(calls) {
 }
 
 // Punto de composicion de la videollamada: la app solo conoce lo que devuelve esta funcion.
-export function createCallFeature({ document, send, notices, getUserMedia, createPeerConnection }) {
+export function createCallFeature({ document, send, notices, request, schedule, getUserMedia, createPeerConnection }) {
   const callView = new CallView(document);
+  const iceServers = new IceServerSource(request, schedule);
   const calls = new CallController({
+    iceServers,
+    schedule,
     signaling: new CallSignaling(send),
     view: callView,
     notices,
@@ -37,8 +41,10 @@ export function createCallFeature({ document, send, notices, getUserMedia, creat
   bindCallView(callView, calls);
 
   return {
-    eventHandlers: createEventHandlers(calls),
+    eventHandlers: createEventHandlers(calls, iceServers),
     startCall: (peer) => calls.start(peer),
     handleConnectionLost: () => calls.handleConnectionLost(),
+    handleConnectionRestored: () => calls.handleConnectionRestored(),
+    handleRoomLeft: () => calls.handleRoomLeft(),
   };
 }

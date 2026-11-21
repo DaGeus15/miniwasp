@@ -57,6 +57,30 @@ proceso. Pasos:
 Si faltan variables, el log del despliegue muestra el error de configuración y el healthcheck falla:
 es el comportamiento esperado, no un fallo de la aplicación.
 
+## TURN para las videollamadas
+
+Con solo STUN, dos aparatos detrás de NAT distintos (un celular con datos móviles y una PC en wifi,
+por ejemplo) a menudo no logran conectarse: la cámara no aparece y la llamada falla. TURN retransmite
+el audio y el video, que siguen cifrados de punta a punta.
+
+1. En el panel de Cloudflare, abre **Realtime → TURN Server** (enlace directo:
+   `https://dash.cloudflare.com/?to=/:account/calls`) y crea una clave TURN.
+2. Copia el **Token ID** y el **API Token**. El token es un secreto: no lo pegues en el código ni en
+   el repositorio.
+3. Configura las dos variables en cada despliegue:
+   - Railway: `TURN_KEY_ID` y `TURN_KEY_API_TOKEN` en *Variables* del servicio (se redespliega solo).
+   - Oracle (Docker): agrégalas al entorno del contenedor `miniwasp-app` y recréalo.
+4. Comprueba: durante una llamada, `GET /rooms/ice-servers` debe traer una entrada `turn:` con
+   `username` y `credential` (fuera de una llamada responde 409). Si Cloudflare falla, el registro
+   muestra `turn.credentials_failed` y la llamada sigue con STUN.
+5. Gasto: Cloudflare no tiene un tope que bloquee el gasto. Configura una alerta de uso o de
+   facturación en *Notifications* y, si llega, borra la app TURN en *Realtime → TURN Server*: el
+   retransmisor deja de funcionar al instante y las llamadas siguen con STUN.
+
+Costo: los primeros 1 000 GB de tráfico retransmitido al mes son gratis (compartidos con el SFU de
+Cloudflare, que MiniWasp no usa); después, US$0,05 por GB. Solo se retransmite cuando no hay camino
+directo.
+
 ## Imagen y memoria
 
 - La moderación de imágenes agrega dependencias pesadas a la imagen. Medidas en el `node_modules`
@@ -121,5 +145,6 @@ reinicio y lo elimina la regla de expiración.
   el mes siguiente. El *app sleeping* reduce el consumo. Al suspenderse se pierden las salas sin
   conexiones abiertas, algo coherente con la mensajería temporal. Una conversación abierta mantiene
   la instancia despierta.
-- **Videollamadas:** el servidor solo hace de señalización (STUN de Cloudflare). Sin TURN, en redes
-  que bloquean la conexión directa la llamada falla con un aviso.
+- **Videollamadas:** el servidor solo hace de señalización. Con `TURN_KEY_ID` y
+  `TURN_KEY_API_TOKEN` usa el TURN de Cloudflare (ver *TURN para las videollamadas*); sin ellos, solo
+  STUN, y entre redes que impiden la conexión directa la llamada falla con un aviso.

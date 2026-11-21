@@ -6,9 +6,13 @@ import { ValidationError } from '../validation.js';
 import { CallSession } from './call-session.js';
 
 export const DEFAULT_RING_TIMEOUT_MS = 30000;
+// Lo que espera una llamada contestada a que vuelva quien perdio la conexion. Cubre los
+// primeros reintentos del navegador (a los 2, 6 y 14 segundos).
+export const DEFAULT_RETURN_GRACE_MS = 20000;
 
 const NAME_REQUIRED_ERROR = 'Escribe tu nombre antes de llamar';
 const INVALID_SIGNAL_ERROR = 'La señal de la llamada no es válida';
+const INVALID_CALL_ERROR = 'La llamada no es válida';
 
 // Decide que puede ocurrir en cada llamada y a quien se le avisa.
 // Ignora en silencio los mensajes de llamadas ajenas o ya terminadas: pueden ser
@@ -17,6 +21,7 @@ export class CallCoordinator {
   #directory;
   #schedule;
   #ringTimeoutMs;
+  #returnGraceMs;
   #logger;
   #metrics;
   #sessionsById = new Map();
@@ -28,12 +33,14 @@ export class CallCoordinator {
     metrics,
     schedule = scheduleOnce,
     ringTimeoutMs = DEFAULT_RING_TIMEOUT_MS,
+    returnGraceMs = DEFAULT_RETURN_GRACE_MS,
   }) {
     this.#directory = directory;
     this.#logger = logger;
     this.#metrics = metrics;
     this.#schedule = schedule;
     this.#ringTimeoutMs = ringTimeoutMs;
+    this.#returnGraceMs = returnGraceMs;
   }
 
   invite(caller, calleeId) {
@@ -97,11 +104,49 @@ export class CallCoordinator {
     }
   }
 
-  handleDeparture(peer) {
+  // Si la sesion tiene una llamada sonando o en curso: solo entonces se le dan credenciales TURN.
+  hasCallFor(sessionId) {
+    return [...this.#sessionsById.values()].some((session) =>
+      session.participants.some((participant) => participant.sessionId === sessionId),
+    );
+  }
+
+  // canReturn: la sesion sigue vigente y su sala abierta, asi que puede reconectar. Si la
+  // sesion termino (salio, la sacaron o se cerro la sala), la llamada termina enseguida.
+  handleDeparture(peer, { canReturn = false } = {}) {
     const session = this.#sessionsByPeer.get(peer);
-    if (session) {
+    if (!session) {
+      return;
+    }
+    this.#sessionsByPeer.delete(peer);
+    const isWaiting =
+      canReturn &&
+      session.awaitReturnOf(peer, this.#schedule, this.#returnGraceMs, () => {
+        this.#end(session, CallEndReason.DISCONNECTED);
+      });
+    if (isWaiting) {
+      this.#logger.info('call.interrupted', { callId: session.id });
+    } else {
       this.#end(session, CallEndReason.DISCONNECTED);
     }
+  }
+
+  // La conexion nueva de alguien que estaba en una llamada la retoma. Si ya no se puede, se
+  // le avisa que termino; la respuesta es la misma exista o no el id, asi que no revela nada.
+  resume(peer, callId) {
+    if (typeof callId !== 'string') {
+      throw new ValidationError(INVALID_CALL_ERROR);
+    }
+    const session = this.#sessionsById.get(callId);
+    const previous = session?.participantReplacedBy(peer);
+    if (!previous) {
+      peer.send({ type: ServerEvent.CALL_ENDED, callId, reason: CallEndReason.DISCONNECTED });
+      return;
+    }
+    session.replace(previous, peer);
+    this.#sessionsByPeer.delete(previous);
+    this.#sessionsByPeer.set(peer, session);
+    this.#logger.info('call.resumed', { callId });
   }
 
   #refusalReason(caller, callee) {
@@ -128,7 +173,7 @@ export class CallCoordinator {
   }
 
   #end(session, reason) {
-    session.stopRinging();
+    session.stopTimers();
     this.#sessionsById.delete(session.id);
     for (const participant of session.participants) {
       this.#sessionsByPeer.delete(participant);

@@ -9,7 +9,6 @@ export class CallSignaling {
     this.#send = send;
   }
 
-
   invite(peerId) {
     return this.#send({ type: ClientEvent.CALL_INVITE, to: peerId });
   }
@@ -24,6 +23,10 @@ export class CallSignaling {
 
   hangUp(callId) {
     return this.#send({ type: ClientEvent.CALL_HANGUP, callId });
+  }
+
+  resume(callId) {
+    return this.#send({ type: ClientEvent.CALL_RESUME, callId });
   }
 
   relay(callId, signal) {

@@ -270,6 +270,16 @@ function e2eSendRaw(payload) {
   return true;
 }
 
+// Simula un corte de red del chat: cierra el WebSocket abierto sin que la app lo pida.
+function e2eDropSocket() {
+  const socket = e2eState.sockets.findLast((candidate) => candidate.readyState === window.WebSocket.OPEN);
+  if (!socket) {
+    return false;
+  }
+  socket.close(4000, 'corte simulado');
+  return true;
+}
+
 // Map en vez de objeto: la prueba elige la lectura por nombre sin indexar propiedades.
 window.__e2eApi = new Map([
   ['readVideo', e2eReadVideo],
@@ -279,6 +289,7 @@ window.__e2eApi = new Map([
   ['readUiLog', () => e2eState.uiLog],
   ['readSocketCloses', () => e2eState.socketCloses],
   ['sendRaw', e2eSendRaw],
+  ['dropSocket', e2eDropSocket],
   ['collectStats', e2eCollectStats],
   ['clickAt', e2eClickAt],
 ]);

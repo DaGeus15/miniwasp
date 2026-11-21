@@ -15,6 +15,7 @@ export const ClientEvent = Object.freeze({
   CALL_REJECT: 'call-reject',
   CALL_HANGUP: 'call-hangup',
   CALL_SIGNAL: 'call-signal',
+  CALL_RESUME: 'call-resume',
 });
 
 export const ServerEvent = Object.freeze({

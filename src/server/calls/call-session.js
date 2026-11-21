@@ -8,6 +8,8 @@ import { SignalKind } from '../../shared/events.js';
 export class CallSession {
   #isRinging = true;
   #cancelRingTimeout = null;
+  #cancelReturnTimeout = null;
+  #awayPeer = null;
   #relayedKinds = new Set();
   #signalRules;
 
@@ -16,11 +18,11 @@ export class CallSession {
     this.caller = caller;
     this.callee = callee;
     this.#signalRules = new Map([
-      [SignalKind.OFFER, (peer) => peer === caller && !this.#hasRelayed(SignalKind.OFFER)],
+      [SignalKind.OFFER, (peer) => peer === this.caller && !this.#hasRelayed(SignalKind.OFFER)],
       [
         SignalKind.ANSWER,
         (peer) =>
-          peer === callee &&
+          peer === this.callee &&
           this.#hasRelayed(SignalKind.OFFER) &&
           !this.#hasRelayed(SignalKind.ANSWER),
       ],
@@ -64,6 +66,43 @@ export class CallSession {
 
   stopRinging() {
     this.#cancelRingTimeout?.();
+  }
+
+  // Una llamada ya contestada sigue unos segundos si a alguien se le cae la conexion: el
+  // audio y el video van directo entre los navegadores y pueden seguir mientras reconecta.
+  // Si nadie vuelve a tiempo, onTimeout la termina. Devuelve si quedo esperando.
+  awaitReturnOf(peer, schedule, delayMs, onTimeout) {
+    if (this.#isRinging || this.#awayPeer || !this.includes(peer)) {
+      return false;
+    }
+    this.#awayPeer = peer;
+    this.#cancelReturnTimeout = schedule(onTimeout, delayMs);
+    return true;
+  }
+
+  // La misma sesion (no otra persona) puede retomar su lugar con su conexion nueva, aunque el
+  // servidor aun no haya notado que la anterior se corto (por ejemplo, al cambiar de red).
+  participantReplacedBy(peer) {
+    return this.#isRinging || this.includes(peer)
+      ? null
+      : (this.participants.find((participant) => participant.sessionId === peer.sessionId) ?? null);
+  }
+
+  replace(previous, peer) {
+    if (this.caller === previous) {
+      this.caller = peer;
+    } else {
+      this.callee = peer;
+    }
+    if (this.#awayPeer === previous) {
+      this.#awayPeer = null;
+      this.#cancelReturnTimeout?.();
+    }
+  }
+
+  stopTimers() {
+    this.stopRinging();
+    this.#cancelReturnTimeout?.();
   }
 
   #hasRelayed(kind) {

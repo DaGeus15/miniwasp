@@ -22,6 +22,7 @@ describe('CallSignaling', () => {
     signaling.reject('call-1');
     signaling.hangUp('call-1');
     signaling.relay('call-1', signal);
+    signaling.resume('call-1');
 
     assert.deepEqual(sent, [
       { type: ClientEvent.CALL_INVITE, to: 'peer-1' },
@@ -29,6 +30,7 @@ describe('CallSignaling', () => {
       { type: ClientEvent.CALL_REJECT, callId: 'call-1' },
       { type: ClientEvent.CALL_HANGUP, callId: 'call-1' },
       { type: ClientEvent.CALL_SIGNAL, callId: 'call-1', signal },
+      { type: ClientEvent.CALL_RESUME, callId: 'call-1' },
     ]);
   });
 

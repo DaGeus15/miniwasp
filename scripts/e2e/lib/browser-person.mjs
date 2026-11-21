@@ -6,6 +6,7 @@ import { chromium } from 'playwright-core';
 const PROBES_PATH = join(import.meta.dirname, 'browser-probes.js');
 const VIEWPORT = { width: 1000, height: 700 };
 const DEFAULT_TIMEOUT_MS = 20000;
+const SCREENSHOT_RETRY_MS = 500;
 const BASE_ARGS = ['--use-fake-device-for-media-stream', '--ignore-certificate-errors'];
 
 export const MediaAccess = Object.freeze({ GRANTED: 'granted', DENIED: 'denied' });
@@ -41,7 +42,15 @@ export class BrowserPerson {
     const page = await context.newPage();
     const person = new BrowserPerson({ label, browser, context, page });
     await page.goto(baseUrl);
+    await person.acceptRules();
     return person;
+  }
+
+  // Crear o entrar a una sala exige aceptar las normas. La app lo recuerda en este contexto,
+  // asi que basta una vez por persona, tambien para los enlaces de invitacion posteriores.
+  async acceptRules() {
+    await this.waitForHome();
+    await this.page.check('#accept-rules');
   }
 
   // Devuelve y vacia los errores de consola y de pagina acumulados.
@@ -138,8 +147,16 @@ export class BrowserPerson {
     return tab;
   }
 
+  // Chrome sin ventana a veces aun no compuso el primer cuadro de un navegador recien
+  // abierto ("Unable to capture screenshot"): se trae la pestana al frente y se reintenta.
   async screenshot(path) {
-    await this.page.screenshot({ path });
+    try {
+      await this.page.screenshot({ path });
+    } catch {
+      await this.page.bringToFront();
+      await this.page.waitForTimeout(SCREENSHOT_RETRY_MS);
+      await this.page.screenshot({ path });
+    }
   }
 
   async close() {

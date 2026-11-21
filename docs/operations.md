@@ -8,6 +8,7 @@
 | `HOST` | No | `127.0.0.1` sin TLS, `0.0.0.0` con TLS | Interfaz de escucha |
 | `TLS_CERT_FILE`, `TLS_KEY_FILE` | No | — | Certificado para HTTPS; deben ir juntos |
 | `STUN_URLS` | No | `stun:stun.cloudflare.com:3478` | Lista separada por comas; vacío desactiva STUN |
+| `TURN_KEY_ID`, `TURN_KEY_API_TOKEN` | No | — | Clave TURN de Cloudflare Realtime; deben ir juntas. El token es un **secreto** y nunca sale del servidor. Con ellas, cada llamada recibe credenciales TURN de 1 hora que el navegador renueva cada 45 minutos (`GET /rooms/ice-servers`, solo con una llamada sonando o en curso; 60 pedidos cada 10 minutos por IP y 10 por sesión); si Cloudflare no responde, la llamada sigue con STUN. Sin ellas, solo STUN |
 | `TRUSTED_PROXY_HEADER` | No | — | Solo detrás de un proxy que la sobrescribe: `x-real-ip` (Railway) o `cf-connecting-ip` (Cloudflare). Lee la IP real, validada con `net.isIP()`, y activa HSTS. Otro valor detiene el arranque |
 | `NODE_ENV` | No | — (`production` en la imagen Docker) | Con `production` el servidor se niega a arrancar sin bucket |
 | `S3_ENDPOINT` | En producción | — | URL del bucket compatible con S3; debe ser `https` |
@@ -115,7 +116,12 @@ subidas en vuelo (hasta 8 MB cada una, más su copia cifrada). En un plan con po
 - Un reinicio o un redespliegue cierra todas las salas y deja ilegibles sus adjuntos.
 - Videollamadas de dos personas: las salas admiten 20, pero una llamada grupal P2P de 20 no es viable;
   necesitaría un SFU.
-- Sin TURN: en redes que bloquean la conexión directa la llamada falla con un aviso.
+- Sin `TURN_KEY_ID` y `TURN_KEY_API_TOKEN` no hay TURN: entre redes que impiden la conexión directa
+  (por ejemplo, un celular con datos móviles y una PC en wifi) la llamada falla con un aviso. TURN de
+  Cloudflare es gratis hasta 1 000 GB de tráfico retransmitido al mes; después cobra US$0,05 por GB.
+- Una llamada contestada aguanta 20 s sin conexión de chat de una de las dos personas (el video va
+  directo entre los navegadores). Si el cambio de red rompe también el camino del video, la llamada
+  falla: no se hace un reinicio de ICE.
 - Límites por IP: personas detrás de la misma IP comparten cupo. Lo mismo pasa con los vetos de las
   salas públicas: quien comparte IP con alguien expulsado tampoco puede entrar, y quien cambia de IP
   evade el veto.

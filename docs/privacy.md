@@ -26,7 +26,7 @@ opere. La versión para las personas usuarias es `src/client/privacy.html` (`/pr
 | Huella seudónima de la IP (HMAC con una clave aleatoria del proceso) | Memoria del servidor: en cada sesión y, si alguien es expulsado de una sala pública, en su lista de vetos | Impedir que vuelva quien fue expulsado de una sala pública; correlacionar registros | La de la sesión, lo que dure la sesión; la del veto, **lo que dure la sala** (como mucho 500 por sala) | Nadie; nunca se guarda la IP |
 | Preferencia de no recibir susurros | Memoria del servidor (por sesión) y `localStorage` (`miniwasp-accepts-whispers`) | Respetar la decisión de no recibir invitaciones | Lo que dure la sesión; el navegador la recuerda hasta que se borre | Nadie; quien invita solo ve "no disponible" |
 | Pase de traslado a un susurro | Memoria del servidor | Mudar a cada persona al susurro | Un solo uso, 60 segundos | Solo la persona que lo recibió |
-| IP en candidatos ICE | Navegador de la otra persona y servidor STUN | Establecer la conexión directa | No se almacena | La otra persona tras aceptar; el STUN |
+| IP en candidatos ICE | Navegador de la otra persona, servidor STUN y, si está configurado, el TURN de Cloudflare | Establecer la conexión (directa o retransmitida) | No se almacena en MiniWasp | La otra persona tras aceptar; el STUN; el TURN, que retransmite el audio y el video cifrados sin poder verlos |
 | Registros técnicos | Salida estándar del proceso | Diagnóstico | Lo que defina el operador | Operador; solo ids opacos, categorías y motivos |
 
 ## Principios
@@ -60,7 +60,7 @@ opere. La versión para las personas usuarias es `src/client/privacy.html` (`/pr
 ## Pendientes para un despliegue real
 
 - Definir la retención de los registros del proceso en el entorno de despliegue.
-- Evaluar al servidor STUN de un tercero (Cloudflare) y al proveedor del bucket (Railway) como
+- Evaluar a los servidores STUN y TURN de un tercero (Cloudflare) y al proveedor del bucket (Railway) como
   encargados del tratamiento, con el contrato correspondiente.
 - Definir un contacto para solicitudes de las personas titulares y avisos de contenido ilegal (ver
   [moderation.md](moderation.md)).

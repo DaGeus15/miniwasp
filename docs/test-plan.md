@@ -34,13 +34,13 @@ imágenes con el modelo real) para comprobar que el empaquetado y el backend WAS
 | CP-007 | Sad | Cámara denegada por el navegador | `call-controller.test.js` › no invita si se niega el permiso; E2E-07 |
 | CP-008 | Happy | Desactivar micrófono y verificar las pistas | `local-media.test.js` › alterna el microfono y la camara por separado; E2E-04 |
 | CP-009 | Happy | Finalizar y liberar recursos | `call-controller.test.js` › colgar avisa al servidor y libera todo; E2E-06 |
-| CP-010 | Recovery | Reconectar tras una interrupción | `connection.test.js` › reintenta con esperas crecientes; `session.test.js` › sigue reconectando si cae la red; E2E-10 |
+| CP-010 | Recovery | Reconectar tras una interrupción | `connection.test.js` › reintenta con esperas crecientes; `session.test.js` › sigue reconectando si cae la red; `videocall.test.js` › retoma la llamada al volver con su misma sesion; E2E-10; E2E-15 |
 | CP-011 | Recovery | Pérdida del servidor de señalización | `call-controller.test.js` › termina la llamada si se pierde el servidor; `videocall-app.test.js` |
 | CP-012 | Security | Rechazar mensajes WebSocket inválidos | `create-chat-server.test.js` › informa el error solo a quien envio un mensaje invalido; `videocall.test.js` › rechaza senales mal formadas, tipos desconocidos |
 | CP-013 | Boundary | Rechazar mensajes de tamaño excesivo | `create-chat-server.test.js` › cierra esa conexion (1009); `signal.test.js` › SDP sobre el maximo |
 | CP-014 | Concurrency | Sin participantes duplicados al reconectar | `peer-registry.test.js` › muestra una sola vez a quien reconecta |
 | CP-015 | Security | Sin acceso después de la expulsión | `rooms.test.js` › CP-015: quien crea la sala puede sacar a alguien y esa persona no puede volver |
-| CP-016 | Security | Credenciales TURN no expuestas | `audit-scenarios.test.js` › CP-016 |
+| CP-016 | Security | Credenciales TURN no expuestas | `audit-scenarios.test.js` › CP-016; `ice-servers.test.js` › solo quien esta en una sala recibe los servidores ICE |
 | CP-017 | Security | Sin tokens en los registros | `audit-scenarios.test.js` › CP-017 |
 | CP-018 | Concurrency | Finalización simultánea desde dos clientes | `audit-scenarios.test.js` › CP-018; E2E-11 |
 | CP-019 | Security | Sin eventos de salas ajenas | `audit-scenarios.test.js` › CP-019 |

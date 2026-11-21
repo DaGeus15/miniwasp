@@ -20,6 +20,7 @@ const JAVASCRIPT_MODULES = [
   'client/calls/call-phase.js',
   'client/calls/call-signaling.js',
   'client/calls/call-view.js',
+  'client/calls/ice-server-source.js',
   'client/calls/local-media.js',
   'client/calls/peer-link.js',
   'client/calls/security-code.js',

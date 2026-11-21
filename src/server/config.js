@@ -119,6 +119,23 @@ function loadObjectStorage(env) {
   };
 }
 
+const TURN_VARIABLES = ['TURN_KEY_ID', 'TURN_KEY_API_TOKEN'];
+const TURN_KEY_ID_PATTERN = /^[\w-]{1,128}$/;
+
+// Clave TURN de Cloudflare Realtime (opcional). Sin ella las llamadas usan solo STUN.
+function loadTurnKey({ TURN_KEY_ID: keyId, TURN_KEY_API_TOKEN: apiToken }) {
+  if (!keyId && !apiToken) {
+    return null;
+  }
+  if (!keyId || !apiToken) {
+    throw new Error(`Configura juntas las variables de TURN: ${TURN_VARIABLES.join(', ')}`);
+  }
+  if (!TURN_KEY_ID_PATTERN.test(keyId)) {
+    throw new Error('TURN_KEY_ID no es un identificador valido');
+  }
+  return { keyId, apiToken };
+}
+
 // Falla al arrancar: una configuracion invalida no debe descubrirse durante una llamada.
 // Siempre se escucha solo en esta maquina salvo que HOST lo indique de forma explicita.
 export function loadConfig(env = process.env, readFile = readFileSync) {
@@ -127,6 +144,7 @@ export function loadConfig(env = process.env, readFile = readFileSync) {
     host: env.HOST ?? LOOPBACK_HOST,
     tls: loadTlsCredentials(env, readFile),
     iceServers: parseIceServers(env.STUN_URLS),
+    turnKey: loadTurnKey(env),
     trustedProxyHeader: parseTrustedProxyHeader(env.TRUSTED_PROXY_HEADER),
     objectStorage: loadObjectStorage(env),
     ...loadCapacity(env),

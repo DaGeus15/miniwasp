@@ -11,6 +11,11 @@ const END_NOTICE_KEYS = new Map([
   [CallEndReason.TIMEOUT, 'callTimedOut'],
 ]);
 
+// Lo que se sostiene una llamada mientras el chat reconecta; el servidor espera lo mismo.
+export const RETURN_GRACE_MS = 20000;
+// Solo una llamada ya contestada puede seguir: el audio y el video no pasan por el chat.
+const RESUMABLE_PHASES = new Set([CallPhase.CONNECTING, CallPhase.ACTIVE]);
+
 // Ciclo de vida de la llamada en el navegador. Coordina a sus colaboradores sin conocer
 // el DOM, WebRTC ni el formato de los mensajes. Solo hay una llamada a la vez.
 export class CallController {
@@ -19,19 +24,18 @@ export class CallController {
   #createLink;
   #view;
   #notices;
-  #iceServers = [];
+  #iceServers;
+  #schedule;
   #call = null;
 
-  constructor({ signaling, createMedia, createLink, view, notices }) {
+  constructor({ signaling, createMedia, createLink, view, notices, iceServers, schedule }) {
     this.#signaling = signaling;
     this.#createMedia = createMedia;
     this.#createLink = createLink;
     this.#view = view;
     this.#notices = notices;
-  }
-
-  useIceServers(iceServers) {
     this.#iceServers = iceServers;
+    this.#schedule = schedule;
   }
 
   async start(peer) {
@@ -40,6 +44,7 @@ export class CallController {
     }
     const call = this.#open({ id: null, peer, phase: CallPhase.PREPARING });
 
+    // Los servidores ICE se piden recien cuando aceptan: el servidor solo los da durante una llamada.
     const isReady = await this.#acquireMedia(call);
     if (isReady && !this.#signaling.invite(peer.id)) {
       this.#leave('offline');
@@ -53,7 +58,7 @@ export class CallController {
     }
     this.#enterPhase(call, CallPhase.CONNECTING);
 
-    const isReady = await this.#acquireMedia(call);
+    const isReady = await this.#prepare(call);
     if (isReady && this.#openLink(call)) {
       this.#signaling.accept(call.id);
     }
@@ -103,13 +108,14 @@ export class CallController {
     this.#open({ id: callId, peer, phase: CallPhase.INCOMING });
   }
 
-  handleAccepted({ callId }) {
+  async handleAccepted({ callId }) {
     const call = this.#findCall(callId);
     if (!call) {
       return;
     }
     this.#enterPhase(call, CallPhase.CONNECTING);
-    if (this.#openLink(call)) {
+    await this.#fetchIceServers(call);
+    if (this.#call === call && this.#openLink(call)) {
       call.link.startOffer();
     }
   }
@@ -124,14 +130,47 @@ export class CallController {
     }
   }
 
+  // Si el chat se corta durante una llamada contestada, la llamada sigue mientras reconecta.
+  // Si no vuelve a tiempo, se cierra; cada corte tiene su propio plazo.
   handleConnectionLost() {
-    if (this.#call) {
+    const call = this.#call;
+    if (!call) {
+      return;
+    }
+    if (!RESUMABLE_PHASES.has(call.phase) || !call.link) {
       this.#close('callDisconnected');
+      return;
+    }
+    const interruption = {};
+    call.interruption = interruption;
+    this.#view.showReconnecting(true);
+    this.#schedule(() => {
+      if (this.#call === call && call.interruption === interruption) {
+        this.#close('callDisconnected');
+      }
+    }, RETURN_GRACE_MS);
+  }
+
+  // Salir de la sala (o mudarse a otra) termina la sesion: no hay a donde volver.
+  handleRoomLeft() {
+    if (this.#call) {
+      this.#close();
+    }
+  }
+
+  // De vuelta en linea: la conexion nueva retoma la llamada. Si el servidor ya la termino,
+  // responde con su fin y se cierra como cualquier otra.
+  handleConnectionRestored() {
+    const call = this.#call;
+    if (call?.interruption) {
+      call.interruption = null;
+      this.#view.showReconnecting(false);
+      this.#signaling.resume(call.id);
     }
   }
 
   #open({ id, peer, phase }) {
-    const call = { id, peer, phase, media: this.#createMedia(), link: null };
+    const call = { id, peer, phase, media: this.#createMedia(), link: null, iceServers: null, interruption: null };
     this.#call = call;
     this.#notices.clear();
     this.#enterPhase(call, phase);
@@ -145,6 +184,16 @@ export class CallController {
   #enterPhase(call, phase) {
     call.phase = phase;
     this.#view.showPhase(phase, call.peer.name);
+  }
+
+  // La camara y los servidores ICE (con credenciales TURN recien emitidas) se piden a la vez.
+  async #prepare(call) {
+    const [isReady] = await Promise.all([this.#acquireMedia(call), this.#fetchIceServers(call)]);
+    return isReady;
+  }
+
+  async #fetchIceServers(call) {
+    call.iceServers = await this.#iceServers.forCall();
   }
 
   async #acquireMedia(call) {
@@ -166,7 +215,7 @@ export class CallController {
   #openLink(call) {
     try {
       call.link = this.#createLink({
-        iceServers: this.#iceServers,
+        iceServers: call.iceServers,
         stream: call.media.stream,
         onSignal: (signal) => this.#signaling.relay(call.id, signal),
         onRemoteStream: (stream) => this.#view.showRemoteStream(stream),
@@ -180,7 +229,11 @@ export class CallController {
     }
   }
 
+  // La conexion puede volver a "connected" tras un corte: las renovaciones empiezan una sola vez.
   async #activate(call) {
+    if (call.phase !== CallPhase.ACTIVE) {
+      this.#iceServers.keepRenewed(call.link, () => this.#call === call);
+    }
     this.#enterPhase(call, CallPhase.ACTIVE);
     const securityCode = await call.link.securityCode();
     if (this.#call === call && securityCode) {

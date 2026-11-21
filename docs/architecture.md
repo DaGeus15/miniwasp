@@ -16,7 +16,7 @@ los recibe.
 | Dependencias de producción | `ws` (WebSocket), `@aws-sdk/client-s3` (bucket), `jpeg-js` (decodificar y re-codificar fotos), `nsfwjs` con `@tensorflow/tfjs` y `@tensorflow/tfjs-backend-wasm` (moderación de imágenes local) y `buffer` |
 | Frontend | HTML, CSS y JavaScript sin framework ni librerías de terceros |
 | Medios | WebRTC del navegador, P2P, DTLS-SRTP, solo llamadas de dos personas |
-| STUN | `stun.cloudflare.com:3478` por defecto, configurable; sin TURN |
+| STUN y TURN | STUN `stun.cloudflare.com:3478` por defecto, configurable. TURN de Cloudflare Realtime opcional, con credenciales de corta duración por llamada (`GET /rooms/ice-servers`) |
 | Persistencia | Sesiones, historial (100 mensajes por sala), faltas de moderación y llamadas viven en memoria. Los adjuntos se guardan **cifrados** en un bucket compatible con S3 (en desarrollo y pruebas, en memoria) y se borran al cerrarse la sala |
 | Capacidad por defecto | 20 personas por sala, 1 000 salas, 2 000 conexiones, 1 000 sesiones, 40 subidas simultáneas; ver [operations.md](operations.md) |
 | Despliegue | Railway con un bucket (Railway Buckets), proceso local con TLS opcional, o contenedor detrás de un túnel de Cloudflare |

@@ -124,7 +124,9 @@ docs/         Documentación técnica y evidencia
 - **Moderación automática imperfecta.** Las notas de voz y los PDF no se analizan por dentro, los
   filtros de palabras se pueden evadir y no hay coincidencia de hashes de material de abuso
   (PhotoDNA). Ver [docs/moderation.md](docs/moderation.md).
-- **Sin servidor TURN.** En redes que bloquean la conexión directa la llamada falla con un aviso.
+- **TURN opcional.** Con una clave TURN de Cloudflare (gratis hasta 1 000 GB al mes) las llamadas
+  cruzan cualquier red; sin ella, entre redes que impiden la conexión directa la llamada falla con un
+  aviso.
 - **Una sola instancia.** El estado está en memoria; no sirve en plataformas serverless. Varias
   instancias exigirían un almacén compartido como Redis.
 - **Imagen Docker grande.** TensorFlow.js y nsfwjs agregan cientos de MB; la poda de lo que no se usa

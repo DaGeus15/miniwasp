@@ -71,8 +71,15 @@ function createServices(context) {
     uploadGate: new UploadGate({ maxConcurrent: context.uploadConcurrency }),
   });
   const messenger = new RoomMessenger({ ...context, contentGate, logger, metrics });
+  const calls = new CallCoordinator({
+    directory: context.peers,
+    logger,
+    metrics,
+    ringTimeoutMs: context.ringTimeoutMs,
+    returnGraceMs: context.callReturnGraceMs,
+  });
   const whispers = new WhisperCoordinator({ ...context, directory: context.peers, timeoutMs: context.whisperTimeoutMs });
-  return { contentGate, attachmentUploader, messenger, whispers };
+  return { contentGate, attachmentUploader, messenger, whispers, calls };
 }
 
 // Al terminar una sesion se libera todo lo que se recordaba de ella.
@@ -111,13 +118,12 @@ function createContext(settings) {
 }
 
 function createMessageRouter(context) {
-  const { peers, logger, metrics } = context;
-  const calls = new CallCoordinator({ directory: peers, logger, metrics, ringTimeoutMs: context.ringTimeoutMs });
+  const { calls, logger, metrics } = context;
   const router = new MessageRouter({
     routes: new Map([
       ...createRoomRoutes(context),
       ...createWhisperRoutes(context),
-      ...createCallRoutes({ calls, ...context }),
+      ...createCallRoutes(context),
     ]),
     fallbackLimiter: context.chatLimiter,
     logger,

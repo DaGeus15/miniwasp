@@ -56,10 +56,16 @@ function welcome(context, peer, room) {
   });
 }
 
+// Una conexion que se corta sin que la sesion termine (red inestable, pestaña en segundo
+// plano) puede volver: sus llamadas la esperan unos segundos.
+function canReturn({ sessions, rooms }, peer) {
+  return sessions.isActive(peer.sessionId) && Boolean(rooms.find(peer.roomId));
+}
+
 function releaseConnection(context, messaging, peer, address) {
   const { peers, rooms, connectionGuard, metrics } = context;
   connectionGuard.release(address);
-  messaging.calls.handleDeparture(peer);
+  messaging.calls.handleDeparture(peer, { canReturn: canReturn(context, peer) });
   context.whispers.handleDeparture(peer);
   peers.remove(peer);
   metrics.decrement(Metric.CONNECTIONS_ACTIVE);
