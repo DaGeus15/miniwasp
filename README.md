@@ -6,7 +6,7 @@ invitación y quienes lo abren entran. Los medios de las llamadas viajan cifrado
 directamente entre los dos navegadores y el servidor nunca los recibe. Sin base de datos: salas,
 mensajes y sesiones viven en memoria y desaparecen cuando la sala se cierra.
 
-Publicada en <https://miniwasp.up.railway.app> (ver [docs/deployment.md](docs/deployment.md)).
+Publicada en <https://miniwasp.dayle.dev> (ver [docs/deployment.md](docs/deployment.md)).
 
 ## Funciones
 
@@ -99,7 +99,7 @@ repositorio remoto).
 | [docs/test-plan.md](docs/test-plan.md) | Niveles de prueba y trazabilidad de los escenarios CP-001 a CP-058 |
 | [docs/privacy.md](docs/privacy.md) | Inventario de datos y principios de la LOPDP |
 | [docs/operations.md](docs/operations.md) | Configuración, capacidad, memoria, salud, métricas, registros, apagado y despliegue |
-| [docs/deployment.md](docs/deployment.md) | Despliegue en Railway, bucket para adjuntos y verificación |
+| [docs/deployment.md](docs/deployment.md) | Despliegue en Oracle Cloud con túnel de Cloudflare, bucket para adjuntos y TURN |
 | [docs/api/README.md](docs/api/README.md) | API REST `/api/v1`, catálogo de errores y cómo probarla con la colección de Insomnia |
 
 ## Estructura

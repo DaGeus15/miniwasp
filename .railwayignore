@@ -1,8 +1,0 @@
-# Lista de permitidos para `railway up`: solo se sube lo que necesita el build del Dockerfile.
-# Asi .env, lan.env, certs/, reports/, node_modules/ y demas nunca salen de esta maquina.
-/*
-!/Dockerfile
-!/.dockerignore
-!/package.json
-!/package-lock.json
-!/src/

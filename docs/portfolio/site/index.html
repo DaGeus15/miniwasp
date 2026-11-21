@@ -246,11 +246,11 @@ footer { padding-block: 64px 48px; }
         <h1>Habla en una sala que <em>desaparece.</em></h1>
         <p class="lede">Mensajería temporal sin cuentas ni número de teléfono: salas privadas por enlace, salas públicas con moderación estricta y videollamadas cifradas de punta a punta. Cuando todos salen, la sala y sus archivos dejan de existir.</p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="https://miniwasp.up.railway.app" target="_blank" rel="noopener">Abrir la app en vivo
+          <a class="btn btn-primary" href="https://miniwasp.dayle.dev" target="_blank" rel="noopener">Abrir la app en vivo
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3h8v8M13 3 3 13" stroke="currentColor" stroke-width="2" fill="none"/></svg></a>
           <a class="btn btn-ghost" href="https://github.com/DaGeus15/miniwasp" target="_blank" rel="noopener">Ver el código</a>
         </div>
-        <p class="url">miniwasp.up.railway.app · Railway</p>
+        <p class="url">miniwasp.dayle.dev · Oracle Cloud + Cloudflare</p>
       </div>
       <div class="hero-shot">
         <div class="ticket" aria-hidden="true">
@@ -266,7 +266,7 @@ footer { padding-block: 64px 48px; }
     <div class="facts">
       <div class="fact"><b>0</b><span>cuentas, teléfonos o bases de datos</span></div>
       <div class="fact"><b>AES-256-GCM</b><span>clave por sala, destruida al cerrarla</span></div>
-      <div class="fact"><b>709</b><span>pruebas automatizadas, todas en verde</span></div>
+      <div class="fact"><b>741</b><span>pruebas automatizadas, todas en verde</span></div>
       <div class="fact"><b>100 %</b><span>moderación local, sin servicios externos</span></div>
     </div>
   </div>
@@ -368,7 +368,7 @@ footer { padding-block: 64px 48px; }
         </div>
         <div class="note">
           <b>Sin captura de la llamada</b>
-          Una captura honesta necesita dos cámaras reales. La llamada está cubierta por 14 escenarios E2E con dos Chrome reales (cámara simulada), todos aprobados; en producción se verificó la señalización por WSS, no una llamada entre dos equipos.
+          Una captura honesta necesita dos cámaras reales. La llamada está cubierta por 15 escenarios E2E con dos Chrome reales (cámara simulada), todos aprobados, incluido un corte del chat en plena llamada: aparece «Reconectando…» y la llamada sigue. Entre redes que impiden la conexión directa, un TURN de Cloudflare con credenciales de una hora retransmite el video, que sigue cifrado.
         </div>
       </article>
 
@@ -554,9 +554,9 @@ footer { padding-block: 64px 48px; }
         <p class="lede">Solo cifras con evidencia en el repositorio, con su fecha.</p>
       </div>
       <div class="metrics">
-        <div class="metric"><b>709</b><span>pruebas, 0 fallidas</span><small>165 suites con <span class="mono">node:test</span> y <span class="mono">jsdom</span>: unitarias, de integración con servidor real y de DOM. 20/11/2026.</small></div>
+        <div class="metric"><b>741</b><span>pruebas, 0 fallidas</span><small>173 suites con <span class="mono">node:test</span> y <span class="mono">jsdom</span>: unitarias, de integración con servidor real y de DOM. 21/11/2026.</small></div>
         <div class="metric"><b>98,75 %</b><span>cobertura de líneas</span><small>8 782 de 8 893 líneas; ramas 98,48 % (2 144 de 2 177). Informe lcov del 20/11/2026.</small></div>
-        <div class="metric"><b>14 / 14</b><span>escenarios E2E</span><small>Dos Chrome reales: llamada completa, micrófono, cámara, permisos negados, reconexión y expulsión. 19/11/2026.</small></div>
+        <div class="metric"><b>15 / 15</b><span>escenarios E2E</span><small>Dos Chrome reales: llamada completa, micrófono, cámara, permisos negados, reconexión con la llamada en curso y expulsión. 21/11/2026.</small></div>
         <div class="metric"><b>0</b><span>alertas ZAP Low o superiores</span><small>Escaneo pasivo de OWASP ZAP contra producción; quedan 2 avisos informativos (token de invitación en la URL y contenido no almacenable). 19/11/2026.</small></div>
         <div class="metric"><b>0</b><span>vulnerabilidades en dependencias</span><small>OSV-Scanner, Trivy (código e imagen Docker) y <span class="mono">npm audit</span>. Semgrep: 3 avisos medios en el generador de carga. 19/11/2026.</small></div>
         <div class="metric"><b>100</b><span>clientes simultáneos</span><small>Prueba de carga de señalización: 150 de 150 ciclos de llamada, 0 errores, ida y vuelta p95 de 17 ms en una sola máquina.</small></div>
@@ -585,7 +585,7 @@ footer { padding-block: 64px 48px; }
           <dt>Pruebas</dt><dd><span class="mono">node:test</span>, <span class="mono">jsdom</span>, Playwright, StrykerJS</dd>
           <dt>Análisis</dt><dd>ESLint (sonarjs, security), SonarQube, Semgrep</dd>
           <dt>Seguridad</dt><dd>OWASP ZAP, OSV-Scanner, Trivy, Gitleaks, Checkov, SBOM CycloneDX</dd>
-          <dt>Despliegue</dt><dd>Docker multietapa sin privilegios, Railway, túnel de Cloudflare</dd>
+          <dt>Despliegue</dt><dd>Docker multietapa sin privilegios en Oracle Cloud, detrás de un túnel de Cloudflare</dd>
         </dl>
       </div>
     </div>
@@ -611,8 +611,8 @@ footer { padding-block: 64px 48px; }
           <p>Escribir cada amenaza con su control y su prueba dejó a la vista los huecos reales: los PDF y las notas de voz no se pueden revisar por dentro, así que las salas públicas no los aceptan.</p>
         </div>
         <div>
-          <h3>P2P tiene límites honestos</h3>
-          <p>Sin servidor TURN, algunas redes bloquean la llamada, y una videollamada de 20 personas necesitaría un SFU. Documentar esas limitaciones fue parte del trabajo, igual que no publicar métricas que no pude verificar.</p>
+          <h3>P2P tiene límites que hay que nombrar</h3>
+          <p>Con solo STUN, un celular con datos móviles y una PC en wifi a menudo no se conectan: hizo falta TURN, y entregar sus credenciales solo durante una llamada para que nadie las use como retransmisor gratis. Una videollamada de 20 personas necesitaría un SFU. Documentar esos límites fue parte del trabajo, igual que no publicar métricas que no pude verificar.</p>
         </div>
       </div>
     </div>
@@ -627,12 +627,12 @@ footer { padding-block: 64px 48px; }
         <h2>Crea una sala, comparte el enlace y ciérrala al salir.</h2>
       </div>
       <ul class="links">
-        <li><a href="https://miniwasp.up.railway.app" target="_blank" rel="noopener"><span>App en vivo</span><span>miniwasp.up.railway.app</span></a></li>
+        <li><a href="https://miniwasp.dayle.dev" target="_blank" rel="noopener"><span>App en vivo</span><span>miniwasp.dayle.dev</span></a></li>
         <li><a href="https://github.com/DaGeus15/miniwasp" target="_blank" rel="noopener"><span>Código fuente</span><span>github.com/DaGeus15/miniwasp</span></a></li>
-        <li><a href="https://miniwasp.up.railway.app/rules.html" target="_blank" rel="noopener"><span>Normas de la comunidad</span><span>/rules.html</span></a></li>
-        <li><a href="https://miniwasp.up.railway.app/privacy.html" target="_blank" rel="noopener"><span>Aviso de privacidad</span><span>/privacy.html</span></a></li>
+        <li><a href="https://miniwasp.dayle.dev/rules.html" target="_blank" rel="noopener"><span>Normas de la comunidad</span><span>/rules.html</span></a></li>
+        <li><a href="https://miniwasp.dayle.dev/privacy.html" target="_blank" rel="noopener"><span>Aviso de privacidad</span><span>/privacy.html</span></a></li>
       </ul>
     </div>
-    <p class="small">Proyecto de la asignatura Seguridad de Software, 8.º semestre. Desplegado en Railway (plan gratuito): la primera carga puede tardar unos segundos mientras el servidor despierta.</p>
+    <p class="small">Proyecto de la asignatura Seguridad de Software, 8.º semestre. Desplegado en Oracle Cloud detrás de un túnel de Cloudflare.</p>
   </div>
 </footer>

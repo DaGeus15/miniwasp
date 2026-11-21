@@ -1,6 +1,6 @@
 # Capturas para el portafolio
 
-Capturas reales de la versión publicada en <https://miniwasp.up.railway.app>, tomadas el
+Capturas reales de la versión publicada en <https://miniwasp.dayle.dev>, tomadas el
 20 de noviembre de 2026 con Chrome (Playwright) a 1440 × 900 (escala 1,5) y en móvil a 390 × 844
 (escala 2). Las salas se crearon solo para la demostración (sala pública "Demo", personas ficticias
 Ana, Luis y Sofi) y se cerraron al terminar. La foto del chat es un paisaje generado por código, no

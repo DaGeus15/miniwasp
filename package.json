@@ -22,7 +22,7 @@
     "verify": "npm run lint && npm run coverage",
     "scan:sonar": "docker compose run --rm scanner",
     "scan:security": "node scripts/security/run-security-scans.mjs",
-    "deploy": "node deploy/railway-deploy.mjs"
+    "deploy": "node --env-file-if-exists=.env scripts/deploy/oracle-deploy.mjs"
   },
   "engines": {
     "node": ">=22"

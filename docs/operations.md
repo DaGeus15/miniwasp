@@ -99,7 +99,7 @@ subidas en vuelo (hasta 8 MB cada una, más su copia cifrada). En un plan con po
 
 ## Despliegue y vuelta atrás
 
-- Publicación en internet: Railway, con `npm run deploy`; ver [deployment.md](deployment.md).
+- Publicación en internet: Oracle Cloud detrás de un túnel de Cloudflare, con `npm run deploy`; ver [deployment.md](deployment.md).
 
 - Imágenes fijadas por digest en `Dockerfile` y `docker-compose.yml`: el mismo commit produce la
   misma imagen.
